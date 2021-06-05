@@ -1,0 +1,5 @@
+start = doc
+doc = element doc {
+          attribute version { text },
+          p+ }
+p = element p { text }

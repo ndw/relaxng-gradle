@@ -1,0 +1,108 @@
+plugins {
+  id "java"
+  id 'com.nwalsh.gradle.relaxng' version '0.0.2'
+}
+
+repositories {
+  mavenCentral()
+  mavenLocal()
+}
+
+configurations.all {
+  resolutionStrategy {
+    force 'xml-apis:xml-apis:1.4.01',
+      'org.xmlresolver:xmlresolver:3.0.0'
+  }
+}
+
+configurations {
+  mytest.extendsFrom(implementation)
+}
+
+dependencies {
+  implementation (
+    [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.0'],
+    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25' ],
+    [group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.1'],
+    [group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.1']
+  )
+}
+
+import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
+
+defaultTasks 'dtd_to_rnc', 'dtd_to_rnc_inlined', 'dtd_to_rnc_nostart',
+'rnc_to_rng', 'rnc_to_xsd', 'dtd_to_rnc_with_namespaces',
+'xml_to_xsd', 'rnc_to_dtd_encodings1', 'rnc_to_dtd_encodings2'
+
+task dtd_to_rnc(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/doc.dtd"
+  output "${buildDir}/doc.rnc"
+}
+
+task dtd_to_rnc_inlined(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/doc.dtd"
+  output "${buildDir}/doc_inlined.rnc"
+  inlineAttlist true
+}
+
+task dtd_to_rnc_nostart(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/doc.dtd"
+  output "${buildDir}/doc_nostart.rnc"
+  generateStart false
+}
+
+task rnc_to_rng(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
+  input dtd_to_rnc.outputs.files.singleFile
+  output "${buildDir}/doc.rng"
+  inputType "rnc"
+  outputType "rng"
+}
+
+task rnc_to_xsd(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
+  input dtd_to_rnc.outputs.files.singleFile
+  output "${buildDir}/schema.xml"
+  outputType "xsd"
+  debug true
+}
+
+task dtd_to_rnc_with_namespaces(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/doc.dtd"
+  output "${buildDir}/namespaced.rnc"
+  namespace("xmlns=http://example.com/")
+  // XLink isn't actually used, this is just an example
+  namespace("xmlns:xlink=http://www.w3.org/1999/xlink")
+  debug true
+}
+
+task xml_to_xsd(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/doc1.xml"
+  input "${projectDir}/src/doc2.xml"
+  output "${buildDir}/autogen.xsd"
+  indent 4
+  lineLength 60
+}
+
+task rnc_to_dtd_encodings1(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
+  input dtd_to_rnc.outputs.files.singleFile
+  output "${buildDir}/8859-1.dtd"
+  encoding "iso8859-1"
+  debug true
+}
+
+task rnc_to_dtd_encodings2(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
+  input dtd_to_rnc.outputs.files.singleFile
+  output "${buildDir}/8859-2.dtd"
+  inputEncoding "utf-8"
+  outputEncoding "iso8859-1"
+  debug true
+}
+
+/*
+ FIXME: Examples for these options:
+ colonReplacement
+ elementDefine
+ attlistDefine
+ anyName
+ strictAny
+ annotationPrefix
+*/

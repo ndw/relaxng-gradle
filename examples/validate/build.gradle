@@ -1,0 +1,152 @@
+plugins {
+  id 'com.nwalsh.gradle.relaxng' version '0.0.2'
+}
+
+repositories {
+  mavenCentral()
+  mavenLocal()
+}
+
+configurations.all {
+  resolutionStrategy {
+    force 'xml-apis:xml-apis:1.4.01',
+      'org.xmlresolver:xmlresolver:3.0.0'
+  }
+}
+
+configurations {
+  mytest.extendsFrom(implementation)
+}
+
+dependencies {
+  implementation (
+    [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.0'],
+    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25' ],
+    [group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.1'],
+    [group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.1']
+  )
+}
+
+import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
+
+// You don't have to use configurations, these are just examples.
+
+// By default, interpret the schemas as compact schemas
+relaxng_validate.configure {
+  classpath configurations.mytest
+}
+
+// Use a particular classpath. Also, this configuration
+// doesn't specify a 'compact' setting. With no compact setting,
+// the validator will try to load an XML schema. If it fails
+// it'll try to load the schema as a compact schema.
+relaxng_validate.configure("rnc") {
+  compact true
+}
+
+// This configuration explicitly uses XML schemas
+relaxng_validate.configure("rng") {
+  compact false
+}
+
+defaultTasks 'valid_no_output', 'valid_output', 'valid_implicit_rnc',
+'valid_explicit_rnc', 'invalid_no_fail_build', 'valid_crossref',
+'invalid_crossref', 'valid_ignore_crossref', 'valid_encoding',
+'valid_catalog', 'valid_no_catalog', 'feasible_no_fail_build',
+'feasible_valid'
+
+task valid_no_output(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/input.xml"
+  schema "${projectDir}/schema/doc.rng"
+  compact false
+}
+
+task valid_output(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/input.xml"
+  schema "${projectDir}/schema/doc.rng"
+  output "${buildDir}/input.xml"
+  pluginConfiguration("rng")
+}
+
+// Debug will show you the options used for validation
+task valid_implicit_rnc(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/input.xml"
+  schema "${projectDir}/schema/doc.rnc"
+  debug true
+}
+
+task valid_explicit_rnc(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/input.xml"
+  schema "${projectDir}/schema/doc.rnc"
+}
+
+task invalid_no_fail_build(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/invalid.xml"
+  schema "${projectDir}/schema/doc.rng"
+  compact false
+  assertValid false
+}
+
+task valid_crossref(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/crossref.xml"
+  schema "${projectDir}/schema/idref.rnc"
+}
+
+task invalid_crossref(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/invalidref.xml"
+  schema "${projectDir}/schema/idref.rnc"
+  assertValid false
+}
+
+task valid_ignore_crossref(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/invalidref.xml"
+  schema "${projectDir}/schema/idref.rnc"
+  idref false
+}
+
+task valid_encoding(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/crossref.xml"
+  schema "${projectDir}/schema/idref.rnc"
+  // This is the schema encoding, which isn't really iso8859-1, but
+  // it doesn't contain any characters that would be different if
+  // it was, so it's good enough for a test
+  encoding "iso8859-1"
+}
+
+task valid_catalog(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/extid.xml"
+  schema "${projectDir}/schema/idref.rnc"
+  catalog "${projectDir}/src/catalog.xml"
+}
+
+task valid_no_catalog(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/extid.xml"
+  schema "${projectDir}/schema/idref.rnc"
+}
+
+task feasible_no_fail_build(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/feasible.xml"
+  schema "${projectDir}/schema/doc.rng"
+  assertValid false
+}
+
+task feasible_valid(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/feasible.xml"
+  schema "${projectDir}/schema/doc.rng"
+  assertValid false
+  feasible true
+}
+
+// Tasks below here cause the build to fail
+
+task invalid(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/invalid.xml"
+  schema "${projectDir}/schema/doc.rng"
+  pluginConfiguration("rng")
+}
+
+task schema_unloadable(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/input.xml"
+  schema "${projectDir}/schema/doc.rng"
+  compact true // this is a lie!
+}

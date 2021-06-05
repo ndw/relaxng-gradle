@@ -1,0 +1,82 @@
+plugins {
+  id 'groovy'
+  id 'java-gradle-plugin'
+  id 'com.gradle.plugin-publish' version '0.14.0'
+}
+
+sourceCompatibility = 1.8
+
+dependencies {
+  implementation gradleApi()
+  implementation 'org.xmlresolver:xmlresolver:3.0.0'
+  implementation 'org.relaxng:jing:20181222'
+  implementation 'org.relaxng:trang:20181222'
+
+  testImplementation('org.spockframework:spock-core:1.3-groovy-2.5') {
+    exclude group: 'org.codehaus.groovy'
+  }
+
+  testImplementation gradleTestKit()
+  testImplementation 'junit:junit:4.12'
+}
+
+repositories {
+  mavenCentral()
+}
+
+configurations.all {
+  resolutionStrategy {
+    force 'xml-apis:xml-apis:1.4.01'
+    force 'org.xmlresolver:xmlresolver:3.0.0'
+  }
+}
+
+test {
+  testLogging {
+    showStandardStreams = true
+    exceptionFormat = 'full'
+  }
+}
+
+wrapper {
+  // Not 7.0 because https://discuss.gradle.org/t/spock-tests-dont-run-with-gradle-7-groovy-3/40139
+  gradleVersion = '6.7'
+}
+
+/* FIXME:
+id 'codenarc'
+codenarc {
+  toolVersion = '2.1.0'
+  configFile = file('config/codenarc/codenarc.groovy')
+}
+*/
+
+pluginBundle {
+  website = 'https://github.com/ndw/relaxng-gradle'
+  vcsUrl = 'https://github.com/ndw/relaxng-gradle.git'
+  description = 'A Gradle plugin for running RELAX NG validation and translation'
+  tags = ['relaxng', 'xml', 'documentation']
+
+  mavenCoordinates {
+    groupId = project.group.toString()
+    artifactId = project.name
+    version = project.version.toString()
+  }
+}
+
+gradlePlugin {
+  plugins {
+    RelaxNGValidatePlugin {
+      id = 'com.nwalsh.gradle.relaxng'
+      displayName = 'RELAX NG validation plugin'
+      implementationClass = 'com.nwalsh.gradle.relaxng.validate.RelaxNGValidatePlugin'
+      description = 'A Gradle plugin for doing RELAX NG validation'
+    }
+    RelaxNGTranslatePlugin {
+      id = 'com.nwalsh.gradle.relaxng'
+      displayName = 'RELAX NG translation plugin'
+      implementationClass = 'com.nwalsh.gradle.relaxng.translate.RelaxNGTranslatePlugin'
+      description = 'A Gradle plugin for doing RELAX NG translation'
+    }
+  }
+}

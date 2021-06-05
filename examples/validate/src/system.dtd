@@ -1,0 +1,5 @@
+<!ELEMENT doc (p)+>
+<!ATTLIST doc
+  version CDATA #REQUIRED>
+
+<!ELEMENT p (#PCDATA)>

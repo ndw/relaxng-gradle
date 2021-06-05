@@ -1,0 +1,17 @@
+start = doc
+
+doc = element doc {
+          attribute version { text },
+          attribute xml:id { xsd:ID }?,
+          p+
+      }
+
+p = element p { 
+        attribute xml:id { xsd:ID }?,
+        (text | xref)*
+    }
+
+xref = element xref {
+          attribute ref { xsd:IDREF },
+          text
+      }

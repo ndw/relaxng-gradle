@@ -1,0 +1,4 @@
+<!DOCTYPE doc SYSTEM "http://example.com/system.dtd">
+<doc version="1.0">
+  <p>This document is valid.</p>
+</doc>

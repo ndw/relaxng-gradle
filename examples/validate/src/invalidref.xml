@@ -1,0 +1,7 @@
+<doc version="1.0">
+  <p>This document is valid.</p>
+  <p xml:id="p2">Multiple paragraphs are allowed.</p>
+  <p>That thing I said in <xref ref="p2">that paragraph</xref>.</p>
+  <p>That thing I said in <xref ref="p3">that paragraph</xref> that I
+  forgot to put an xml:id on.</p>
+</doc>
