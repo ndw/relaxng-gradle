@@ -99,4 +99,8 @@ trait RelaxNGTranslatePluginOptions {
     }
     setOption('catalog', catalogList)
   }
+
+  void errorHandler(Object handler) {
+    setOption('errorHandler', handler)
+  }
 }

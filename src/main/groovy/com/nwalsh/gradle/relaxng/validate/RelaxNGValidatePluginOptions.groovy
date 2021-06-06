@@ -55,4 +55,8 @@ trait RelaxNGValidatePluginOptions {
   void feasible(Boolean feasible) {
     setOption('feasible', feasible)
   }
+
+  void errorHandler(Object handler) {
+    setOption('errorHandler', handler)
+  }
 }

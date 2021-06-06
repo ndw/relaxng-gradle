@@ -28,6 +28,7 @@ dependencies {
 }
 
 import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
+import com.nwalsh.gradle.relaxng.util.CollectingErrorHandler
 
 // You don't have to use configurations, these are just examples.
 
@@ -81,10 +82,15 @@ task valid_explicit_rnc(type: RelaxNGValidateTask) {
 }
 
 task invalid_no_fail_build(type: RelaxNGValidateTask) {
+  def eh = new CollectingErrorHandler(System.out)
   input "${projectDir}/src/invalid.xml"
   schema "${projectDir}/schema/doc.rng"
+  errorHandler eh
   compact false
   assertValid false
+  doLast {
+    println("Errors: ${eh.errorCount()}")
+  }
 }
 
 task valid_crossref(type: RelaxNGValidateTask) {

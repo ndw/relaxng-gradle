@@ -71,7 +71,7 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
   }
 
   void output(Object output) {
-    setOption(OUTPUT_OPTION, project.file(output))
+    setOption(OUTPUT_OPTION, project.file(output).toString())
   }
 
   void schema(Object schema) {
@@ -100,37 +100,47 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
 
   @TaskAction
   void run() {
-    WorkQueue workQueue = workerExecutor.classLoaderIsolation() {
-      if (getPluginOption('classpath') != null) {
-        it.getClasspath().from(getPluginOption('classpath'))
+    Object handler = null
+    Map<String,Object> args = [:]
+
+    args["input"] = new ArrayList<String>()
+    args["namespace"] = new ArrayList<String>()
+
+    RelaxNGTranslatePluginConfigurations.instance.getOptions(pluginConfig).findAll { name, value ->
+      if (name == "errorHandler") {
+        handler = value
+      } else {
+        args[name] = value
       }
     }
 
-    Map<String,Object> args = [:]
-    RelaxNGTranslatePluginConfigurations.instance.getOptions(pluginConfig).findAll { name, value ->
-      args[name] = value
-    }
-
     this.options.findAll { name, value ->
-      args[name] = value
+      if (name == "errorHandler") {
+        handler = value
+      } else {
+        args[name] = value
+      }
     }
 
-    List<String> arguments = []
-    args.keySet().each { name ->
-      if (args[name] in List) {
-        for (String value : args[name]) {
-          arguments.add("-${name}")
-          arguments.add(value.toString())
+    WorkQueue workQueue = null
+    if (handler == null) {
+      workQueue = workerExecutor.classLoaderIsolation() {
+        if (getPluginOption('classpath') != null) {
+          it.getClasspath().from(getPluginOption('classpath'))
         }
-      } else {
-        arguments.add("-${name}")
-        arguments.add(args[name].toString())
       }
     }
 
     if (getOption(INPUT_OPTION) != null) {
-      workQueue.submit(RelaxNGTranslate) {
-        it.arguments.set(arguments)
+      project.files(getOption(INPUT_OPTION)).each {
+        if (handler != null) {
+          RelaxNGTranslateImpl impl = new RelaxNGTranslateImpl(args, handler)
+          impl.execute()
+        } else {
+          workQueue.submit(RelaxNGTranslate) {
+            it.arguments.set(args)
+          }
+        }
       }
     }
   }

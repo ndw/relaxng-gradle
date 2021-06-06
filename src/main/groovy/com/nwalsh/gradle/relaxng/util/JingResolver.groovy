@@ -14,7 +14,6 @@ import org.xmlresolver.XMLResolverConfiguration
 import org.xmlresolver.sources.ResolverInputSource;
 import org.xmlresolver.sources.ResolverSAXSource;
 
-
 class JingResolver extends com.thaiopensource.resolver.AbstractResolver {
   private final Resolver resolver
 

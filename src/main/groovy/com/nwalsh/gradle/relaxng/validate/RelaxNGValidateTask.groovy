@@ -100,31 +100,42 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
 
   @TaskAction
   void run() {
-    WorkQueue workQueue = workerExecutor.classLoaderIsolation() {
-      if (getPluginOption('classpath') != null) {
-        it.getClasspath().from(getPluginOption('classpath'))
+    Object handler = null
+    Map<String,String> args = [:]
+    RelaxNGValidatePluginConfigurations.instance.getOptions(pluginConfig).findAll { name, value ->
+      if (name == "errorHandler") {
+        handler = value
+      } else {
+        args[name] = value.toString()
       }
     }
 
-    Map<String,String> args = [:]
-    RelaxNGValidatePluginConfigurations.instance.getOptions(pluginConfig).findAll { name, value ->
-      args[name] = value.toString()
-    }
-
     this.options.findAll { name, value ->
-      args[name] = value.toString()
+      if (name == "errorHandler") {
+        handler = value
+      } else {
+        args[name] = value.toString()
+      }
     }
 
-    List<String> arguments = []
-    args.keySet().each { name ->
-      arguments.add("-${name}")
-      arguments.add(args[name])
+    WorkQueue workQueue = null;
+    if (handler == null) {
+      workQueue = workerExecutor.classLoaderIsolation() {
+        if (getPluginOption('classpath') != null) {
+          it.getClasspath().from(getPluginOption('classpath'))
+        }
+      }
     }
 
     if (getOption(INPUT_OPTION) != null) {
       project.files(getOption(INPUT_OPTION)).each {
-        workQueue.submit(RelaxNGValidate) {
-          it.arguments.set(arguments)
+        if (handler != null) {
+          RelaxNGValidateImpl impl = new RelaxNGValidateImpl(args, handler)
+          impl.execute()
+        } else {
+          workQueue.submit(RelaxNGValidate) {
+            it.arguments.set(args)
+          }
         }
       }
     }

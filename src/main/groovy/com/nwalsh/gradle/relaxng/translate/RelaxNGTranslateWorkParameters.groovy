@@ -1,8 +1,8 @@
 package com.nwalsh.gradle.relaxng.translate
 
-import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.workers.WorkParameters
 
 interface RelaxNGTranslateWorkParameters extends WorkParameters {
-    ListProperty<String> getArguments()
+    MapProperty<String,Object> getArguments()
 }

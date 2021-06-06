@@ -27,9 +27,10 @@ dependencies {
 }
 
 import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
+import com.nwalsh.gradle.relaxng.util.CollectingErrorHandler
 
 defaultTasks 'dtd_to_rnc', 'dtd_to_rnc_inlined', 'dtd_to_rnc_nostart',
-'rnc_to_rng', 'rnc_to_xsd', 'dtd_to_rnc_with_namespaces',
+'rnc_to_rng', 'rng_to_rnc', 'rnc_to_xsd', 'dtd_to_rnc_with_namespaces',
 'xml_to_xsd', 'rnc_to_dtd_encodings1', 'rnc_to_dtd_encodings2'
 
 task dtd_to_rnc(type: RelaxNGTranslateTask) {
@@ -56,6 +57,11 @@ task rnc_to_rng(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
   outputType "rng"
 }
 
+task rng_to_rnc(type: RelaxNGTranslateTask, dependsOn: ["rnc_to_rng"]) {
+  input rnc_to_rng.outputs.files.singleFile
+  output "${buildDir}/doc-rnc.rnc"
+}
+
 task rnc_to_xsd(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
   input dtd_to_rnc.outputs.files.singleFile
   output "${buildDir}/schema.xml"
@@ -64,12 +70,19 @@ task rnc_to_xsd(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
 }
 
 task dtd_to_rnc_with_namespaces(type: RelaxNGTranslateTask) {
+  def handler = new CollectingErrorHandler(System.out)
+
   input "${projectDir}/src/doc.dtd"
   output "${buildDir}/namespaced.rnc"
   namespace("xmlns=http://example.com/")
   // XLink isn't actually used, this is just an example
   namespace("xmlns:xlink=http://www.w3.org/1999/xlink")
   debug true
+  errorHandler handler
+
+  doLast {
+    println("Warnings: ${handler.warningCount()}")
+  }
 }
 
 task xml_to_xsd(type: RelaxNGTranslateTask) {
