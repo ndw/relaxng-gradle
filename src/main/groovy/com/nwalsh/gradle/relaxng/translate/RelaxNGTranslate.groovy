@@ -141,8 +141,8 @@ abstract class RelaxNGTranslate implements WorkAction<RelaxNGTranslateWorkParame
                                            inputParams as String[],
                                            outputType, errorHandler, resolver)
     OutputDirectory od = new LocalOutputDirectory(sc.getMainUri(),
-                                                  new File(output),
-                                                  outputType, "UTF-8", 72, 2)
+                                                  new File(output), ".${outputType}",
+                                                  "UTF-8", 72, 2)
     outputFormat.output(sc, od, outputParams as String[], "rnc", errorHandler)
   }
 
@@ -197,8 +197,8 @@ abstract class RelaxNGTranslate implements WorkAction<RelaxNGTranslateWorkParame
                                            outputType, errorHandler, resolver)
 
     OutputDirectory od = new LocalOutputDirectory(sc.getMainUri(),
-                                                  new File(output),
-                                                  outputType, "UTF-8", 72, 2)
+                                                  new File(output), ".${outputType}",
+                                                  "UTF-8", 72, 2)
     outputFormat.output(sc, od, outputParams as String[], "rnc", errorHandler)
   }
 
@@ -229,8 +229,8 @@ abstract class RelaxNGTranslate implements WorkAction<RelaxNGTranslateWorkParame
                                            inputParams as String[],
                                            outputType, errorHandler, resolver)
     OutputDirectory od = new LocalOutputDirectory(sc.getMainUri(),
-                                                  new File(output),
-                                                  outputType, "UTF-8", 72, 2)
+                                                  new File(output), "${outputType}",
+                                                  "UTF-8", 72, 2)
     outputFormat.output(sc, od, outputParams as String[], "rnc", errorHandler)
   }
 
