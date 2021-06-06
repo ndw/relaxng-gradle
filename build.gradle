@@ -67,13 +67,13 @@ pluginBundle {
 gradlePlugin {
   plugins {
     RelaxNGValidatePlugin {
-      id = 'com.nwalsh.gradle.relaxng'
+      id = 'com.nwalsh.gradle.relaxng.validate'
       displayName = 'RELAX NG validation plugin'
       implementationClass = 'com.nwalsh.gradle.relaxng.validate.RelaxNGValidatePlugin'
       description = 'A Gradle plugin for doing RELAX NG validation'
     }
     RelaxNGTranslatePlugin {
-      id = 'com.nwalsh.gradle.relaxng'
+      id = 'com.nwalsh.gradle.relaxng.translate'
       displayName = 'RELAX NG translation plugin'
       implementationClass = 'com.nwalsh.gradle.relaxng.translate.RelaxNGTranslatePlugin'
       description = 'A Gradle plugin for doing RELAX NG translation'

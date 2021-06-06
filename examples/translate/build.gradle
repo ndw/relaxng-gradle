@@ -1,6 +1,5 @@
 plugins {
-  id "java"
-  id 'com.nwalsh.gradle.relaxng' version '0.0.2'
+  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.3'
 }
 
 repositories {
@@ -10,8 +9,7 @@ repositories {
 
 configurations.all {
   resolutionStrategy {
-    force 'xml-apis:xml-apis:1.4.01',
-      'org.xmlresolver:xmlresolver:3.0.0'
+    force 'org.xmlresolver:xmlresolver:3.0.0'
   }
 }
 

@@ -94,7 +94,7 @@ class RelaxNGTranslateTaskSpec extends Specification {
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.translate'
         }
 
         import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
@@ -128,7 +128,7 @@ p = element p { text }
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.translate'
         }
 
         import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
@@ -176,7 +176,7 @@ p = element p { text }
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.translate'
         }
 
         import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
@@ -210,7 +210,7 @@ start = doc
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.translate'
         }
 
         import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
@@ -245,7 +245,7 @@ start = doc
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.translate'
         }
 
         import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
@@ -295,7 +295,7 @@ debug true
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.translate'
         }
 
         import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask

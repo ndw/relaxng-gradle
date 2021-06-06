@@ -89,7 +89,7 @@ class RelaxNGValidateTaskSpec extends Specification {
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.validate'
         }
 
         import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
@@ -121,7 +121,7 @@ class RelaxNGValidateTaskSpec extends Specification {
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.validate'
         }
 
         import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
@@ -154,7 +154,7 @@ class RelaxNGValidateTaskSpec extends Specification {
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.validate'
         }
 
         import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
@@ -186,7 +186,7 @@ class RelaxNGValidateTaskSpec extends Specification {
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.validate'
         }
 
         import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
@@ -219,7 +219,7 @@ class RelaxNGValidateTaskSpec extends Specification {
 
     gradle << """
         plugins {
-            id 'com.nwalsh.gradle.relaxng'
+            id 'com.nwalsh.gradle.relaxng.validate'
         }
 
         import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask

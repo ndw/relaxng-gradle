@@ -6,12 +6,13 @@ Gradle plugins to perform RELAX NG validation and translation
 This repository contains a set of two Gradle tasks bundled in a single
 plugin.
 
-To use either of the plugins, you must load the plugin in your
+To use either of the plugins, you must load them in your
 `build.gradle` file:
 
 ```
 plugins {
-  id 'com.nwalsh.gradle.relaxng' version '0.0.2'
+  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.3'
+  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.3'
 }
 ```
 

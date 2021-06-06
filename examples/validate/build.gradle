@@ -1,5 +1,5 @@
 plugins {
-  id 'com.nwalsh.gradle.relaxng' version '0.0.2'
+  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.3'
 }
 
 repositories {
