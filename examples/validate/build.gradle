@@ -143,6 +143,12 @@ task feasible_valid(type: RelaxNGValidateTask) {
   feasible true
 }
 
+task no_schema_no_fail_build(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/feasible.xml"
+  schema "${buildDir}/does/not/exist.rng"
+  assertValid false
+}
+
 // Tasks below here cause the build to fail
 
 task invalid(type: RelaxNGValidateTask) {
@@ -156,3 +162,9 @@ task schema_unloadable(type: RelaxNGValidateTask) {
   schema "${projectDir}/schema/doc.rng"
   compact true // this is a lie!
 }
+
+task no_schema(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/feasible.xml"
+  schema "${buildDir}/does/not/exist.rng"
+}
+

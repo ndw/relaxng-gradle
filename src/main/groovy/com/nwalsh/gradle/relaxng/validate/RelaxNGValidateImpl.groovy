@@ -19,6 +19,7 @@ import com.thaiopensource.xml.sax.ErrorHandlerImpl
 import org.xml.sax.ErrorHandler
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 // This class has been separated out because the validator gets run
 // in two different ways: if an errorHandler is passed in, we can't
@@ -135,9 +136,15 @@ class RelaxNGValidateImpl {
         throw new IllegalArgumentException("Failed to load schema: ${schema}")
       }
     } catch (SAXException se) {
-      println("SAX exception: ${se.getMessage()}")
+      errorHandler.error(new SAXParseException(se.getMessage(), null, se))
+      if (assertValid) {
+        throw se
+      }
     } catch (IOException ioe) {
-      println("IO exception: ${ioe.getMessage()}")
+      errorHandler.error(new SAXParseException(ioe.getMessage(), null, ioe))
+      if (assertValid) {
+        throw ioe
+      }
     }
 
     if (output != null) {
