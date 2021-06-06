@@ -51,7 +51,7 @@ class JingResolver extends com.thaiopensource.resolver.AbstractResolver {
       if (absoluteUri != null) {
         resolved = (isExternalIdentifier
                     ? resolver.resolveEntity(null, absoluteUri)
-                    : resolver.resolveURI(absoluteUri, null))
+                    : resolver.resolve(absoluteUri, (String) null))
       }
 
       if (resolved == null) {
