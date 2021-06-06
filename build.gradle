@@ -51,6 +51,34 @@ codenarc {
 }
 */
 
+task setupStage(dependsOn: ["assemble", "test"]) {
+  doLast {
+    mkdir "${buildDir}/stage"
+  }
+
+  doLast {
+    copy {
+      from projectDir
+      into "${buildDir}/stage"
+      include "README.md"
+      include "LICENSE"
+    }
+  }
+
+  doLast {
+    copy {
+      from "${buildDir}/libs"
+      into "${buildDir}/stage"
+    }
+  }
+}
+
+task dist(dependsOn: ["setupStage"], type: Zip) {
+  from("${buildDir}/stage")
+  into "relaxng-gradle-${project.version}"
+  archiveFileName = "relaxng-gradle-${project.version}.zip"
+}
+
 pluginBundle {
   website = 'https://github.com/ndw/relaxng-gradle'
   vcsUrl = 'https://github.com/ndw/relaxng-gradle.git'
