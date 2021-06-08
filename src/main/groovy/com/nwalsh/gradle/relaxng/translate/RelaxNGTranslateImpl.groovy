@@ -52,7 +52,7 @@ class RelaxNGTranslateImpl {
   }
 
   void execute() {
-    debug = options.getOrDefault("debug", "false") == "true"
+    debug = options.getOrDefault("debug", false)
     outputEncoding = options.getOrDefault("outputEncoding", outputEncoding)
     outputIndent = options.getOrDefault("indent", outputIndent)
     outputLineLength = options.getOrDefault("lineLength", outputLineLength)
@@ -173,7 +173,7 @@ class RelaxNGTranslateImpl {
     }
 
     if (options.containsKey('inline-attlist')) {
-      if (options.get('inline-attlist') == "true") {
+      if (options.get('inline-attlist')) {
         inputParams.add('inline-attlist')
       } else {
         inputParams.add('no-inline-attlist')
@@ -181,7 +181,7 @@ class RelaxNGTranslateImpl {
     }
 
     if (options.containsKey('generate-start')) {
-      if (options.get('generate-start') == "true") {
+      if (options.get('generate-start')) {
         inputParams.add('generate-start')
       } else {
         inputParams.add('no-generate-start')
