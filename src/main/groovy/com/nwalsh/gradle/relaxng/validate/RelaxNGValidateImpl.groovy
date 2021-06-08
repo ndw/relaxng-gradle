@@ -101,6 +101,7 @@ class RelaxNGValidateImpl {
                                                      properties.toPropertyMap(),
                                                      sr)
       InputSource insrc = ValidationDriver.uriOrFileInputSource(schema)
+      //println("SCHEMA1: ${insrc.getSystemId()}")
       if (encoding != null) {
         insrc.setEncoding(encoding)
       }
@@ -120,6 +121,7 @@ class RelaxNGValidateImpl {
                                         properties.toPropertyMap(),
                                         sr)
           insrc = ValidationDriver.uriOrFileInputSource(schema)
+          //println("SCHEMA2: ${insrc.getSystemId()}")
           if (encoding != null) {
             insrc.setEncoding(encoding)
           }
@@ -127,7 +129,9 @@ class RelaxNGValidateImpl {
         }
       }
       if (loaded) {
-        if (!driver.validate(ValidationDriver.uriOrFileInputSource(input))) {
+        insrc = ValidationDriver.uriOrFileInputSource(input)
+        //println("INPUT: ${insrc.getSystemId()}")
+        if (!driver.validate(insrc)) {
           if (assertValid) {
             throw new IllegalArgumentException("Document is invalid: ${input}")
           }
@@ -149,6 +153,7 @@ class RelaxNGValidateImpl {
 
     if (output != null) {
       URL asUrl = new URL(UriOrFile.toUri(input))
+      //println("COPY: ${asUrl}")
       InputStream is = new BufferedInputStream(asUrl.openStream())
       OutputStream os = new FileOutputStream(new File(output))
       byte[] buffer = new byte[8192]

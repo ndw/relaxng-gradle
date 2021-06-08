@@ -16,6 +16,10 @@ trait RelaxNGValidatePluginOptions {
     setPluginOption('classpath', cp)
   }
 
+  void parallel(Boolean par) {
+    setPluginOption('parallel', par)
+  }
+
   // ============================================================
 
   // FIXME: there are more options to Jing

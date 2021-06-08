@@ -17,6 +17,10 @@ trait RelaxNGTranslatePluginOptions {
     setPluginOption('classpath', cp)
   }
 
+  void parallel(Boolean par) {
+    setPluginOption('parallel', par)
+  }
+
   // ============================================================
 
   void debug(Boolean debug) {

@@ -32,15 +32,19 @@ import com.nwalsh.gradle.relaxng.util.CollectingErrorHandler
 
 // You don't have to use configurations, these are just examples.
 
-// By default, interpret the schemas as compact schemas
-relaxng_validate.configure {
-  classpath configurations.mytest
-}
-
 // Use a particular classpath. Also, this configuration
 // doesn't specify a 'compact' setting. With no compact setting,
 // the validator will try to load an XML schema. If it fails
 // it'll try to load the schema as a compact schema.
+//
+// This is a small build, so parallelism seems to be fine.
+// On big builds, not so much.
+relaxng_validate.configure {
+  classpath configurations.mytest
+  parallel true
+}
+
+// This configuration uses compact schemas
 relaxng_validate.configure("rnc") {
   compact true
 }

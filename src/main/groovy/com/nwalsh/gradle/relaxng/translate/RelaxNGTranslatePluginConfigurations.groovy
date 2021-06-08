@@ -1,5 +1,10 @@
 package com.nwalsh.gradle.relaxng.translate
 
+// FIXME: figure out how to avoid a singleton here
+// The problem with the singleton is that it's in the daemon, so changes
+// to the global configuration aren't reflected in the run unless the
+// daemon is also restarted.
+
 @Singleton
 class RelaxNGTranslatePluginConfigurations {
     // A singleton that holds the global configuration options.

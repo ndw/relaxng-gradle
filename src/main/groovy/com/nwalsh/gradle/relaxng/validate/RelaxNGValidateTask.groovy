@@ -13,12 +13,15 @@ import org.gradle.api.InvalidUserDataException
 import org.gradle.workers.WorkQueue
 import org.gradle.workers.WorkerExecutor
 
+import com.thaiopensource.xml.sax.ErrorHandlerImpl
+
 import javax.inject.Inject
 
 class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOptions {
   protected static final String INPUT_OPTION = 'input'
   protected static final String OUTPUT_OPTION = 'output'
   protected static final String SCHEMA_OPTION = 'schema'
+  protected static final String PARALLEL_OPTION = 'parallel'
 
   protected final List<String> defaultArguments = [].asImmutable()
 
@@ -118,24 +121,36 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
       }
     }
 
-    WorkQueue workQueue = null;
-    if (handler == null) {
-      workQueue = workerExecutor.classLoaderIsolation() {
-        if (getPluginOption('classpath') != null) {
-          it.getClasspath().from(getPluginOption('classpath'))
-        }
-      }
+    boolean parallel = false
+    // If there's a handler, you can't have parallelism. The handler object
+    // doesn't get to the WorkQueue because it can't be serialized. Or something.
+    // https://discuss.gradle.org/t/is-it-possible-to-pass-a-value-out-of-an-extension-task/40143
+    if (handler == null && getPluginOption(PARALLEL_OPTION) != null) {
+      parallel = getPluginOption(PARALLEL_OPTION)
     }
 
     if (getOption(INPUT_OPTION) != null) {
+      WorkQueue workQueue = null;
+      if (parallel) {
+        workQueue = workerExecutor.classLoaderIsolation() {
+          if (getPluginOption('classpath') != null) {
+            it.getClasspath().from(getPluginOption('classpath'))
+          }
+        }
+      } else {
+        if (handler == null) {
+          handler = new ErrorHandlerImpl(System.out)
+        }
+      }
+
       project.files(getOption(INPUT_OPTION)).each {
-        if (handler != null) {
-          RelaxNGValidateImpl impl = new RelaxNGValidateImpl(args, handler)
-          impl.execute()
-        } else {
+        if (parallel) {
           workQueue.submit(RelaxNGValidate) {
             it.arguments.set(args)
           }
+        } else {
+          RelaxNGValidateImpl impl = new RelaxNGValidateImpl(args, handler)
+          impl.execute()
         }
       }
     }
