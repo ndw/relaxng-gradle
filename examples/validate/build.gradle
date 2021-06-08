@@ -128,6 +128,7 @@ task valid_catalog(type: RelaxNGValidateTask) {
 task valid_no_catalog(type: RelaxNGValidateTask) {
   input "${projectDir}/src/extid.xml"
   schema "${projectDir}/schema/idref.rnc"
+  assertValid false
 }
 
 task feasible_no_fail_build(type: RelaxNGValidateTask) {
@@ -168,3 +169,21 @@ task no_schema(type: RelaxNGValidateTask) {
   schema "${buildDir}/does/not/exist.rng"
 }
 
+// Memory tests. If you drive Gradle too hard, you'll get
+// weird errors when Java runs out of memory. The only
+// hint is .hprof files littered about.
+
+task task0(type: RelaxNGValidateTask) {
+  input "${projectDir}/src/input.xml"
+  schema "${projectDir}/schema/doc.rng"
+  compact false
+}
+
+for (int i = 1; i < 200; i++) {
+  Task t = task "task${i}"(type: RelaxNGValidateTask) {
+    input "${projectDir}/src/input.xml"
+    schema "${projectDir}/schema/doc.rng"
+    compact false
+  }
+  task0.dependsOn t
+}
