@@ -63,6 +63,11 @@ class RelaxNGValidateImpl {
       println("    Feasibly valid? ${showOpt('feasible', 'false')}")
       println("    Encoding: ${encoding == null ? 'unspecified' : encoding}")
       println("    Fail task if invalid? ${showOpt('assert', 'true')}")
+      if (catalogs == null) {
+        println("    Catalogs: (system default catalogs)")
+      } else {
+        println("    Catalogs: ${catalogs}")
+      }
       if (output == null) {
         println("  No output will be produced")
       } else {
@@ -86,10 +91,8 @@ class RelaxNGValidateImpl {
       RngProperty.FEASIBLE.add(properties);
     }
 
-    if (catalogs != null) {
-      JingResolver resolver = new JingResolver(catalogs)
-      properties.put(ValidateProperty.RESOLVER, resolver)
-    }
+    JingResolver resolver = new JingResolver(catalogs)
+    properties.put(ValidateProperty.RESOLVER, resolver)
 
     SchemaReader sr = null
     if (compact) {

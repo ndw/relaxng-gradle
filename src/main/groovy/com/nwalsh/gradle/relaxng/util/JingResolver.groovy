@@ -28,6 +28,8 @@ class JingResolver extends com.thaiopensource.resolver.AbstractResolver {
   }
   
   public void resolve(Identifier id, Input input) throws IOException, ResolverException {
+    //println("JingResolver attempting to resolve ${id.getUriReference()}")
+
     // This logic is largely copied from the com.thaiopensource classes
     if (input.isResolved()) {
       return
@@ -43,46 +45,50 @@ class JingResolver extends com.thaiopensource.resolver.AbstractResolver {
       // ignore
     }
 
-    String resolved = null
     boolean isExternalIdentifier = (id instanceof ExternalIdentifier)
 
     try {
-      if (absoluteUri != null) {
-        resolved = (isExternalIdentifier
-                    ? resolver.resolveEntity(null, absoluteUri)
-                    : resolver.resolve(absoluteUri, (String) null))
-      }
-
-      if (resolved == null) {
-        if (!isExternalIdentifier) {
-          ResolverSAXSource rr = resolver.resolve(id.getUriReference(), null)
-          if (rr != null) {
-            resolved = rr.getSystemId()
-          }
-        } else {
-          ResolverInputSource rr = null;
+      if (isExternalIdentifier) {
+        ResolverInputSource resolved = null
+        if (absoluteUri != null) {
+          resolved = resolver.resolveEntity(null, absoluteUri)
+        }
+        if (resolved == null) {
           if (id instanceof ExternalEntityIdentifier) {
             ExternalEntityIdentifier xid = (ExternalEntityIdentifier) id
-            rr = resolver.resolveEntity(xid.getEntityName(), xid.getPublicId(),
-                                        null, xid.getUriReference())
+            resolved = resolver.resolveEntity(xid.getEntityName(), xid.getPublicId(),
+                                              null, xid.getUriReference())
           } else if (id instanceof ExternalDTDSubsetIdentifier) {
             ExternalDTDSubsetIdentifier xid = (ExternalDTDSubsetIdentifier) id
-            rr = resolver.getExternalSubset(xid.getDoctypeName(), xid.getUriReference())
+            resolved = resolver.getExternalSubset(xid.getDoctypeName(), xid.getUriReference())
           } else {
             ExternalIdentifier xid = (ExternalIdentifier) id
-            rr = resolver.resolveEntity(xid.getPublicId(), xid.getUriReference())
+            resolved = resolver.resolveEntity(xid.getPublicId(), xid.getUriReference())
           }
-          if (rr != null) {
-            resolved = rr.getSystemId()
-          }
+        }
+
+        if (resolved != null) {
+          input.setUri(resolved.getSystemId())
+          input.setByteStream(resolved.getByteStream())
+        }
+      } else {
+        ResolverSAXSource resolved = null
+        if (absoluteUri != null) {
+          resolved = ((ResolverSAXSource) resolver.resolve(absoluteUri, (String) null))
+        }
+
+        if (resolved == null) {
+          resolved = resolver.resolve(id.getUriReference(), null)
+        }
+
+        if (resolved != null) {
+          input.setUri(resolved.getInputSource().getSystemId())
+          input.setByteStream(resolved.getInputSource().getByteStream())
         }
       }
     } catch (ResolverIOException e) {
       throw e.getResolverException()
     }
-
-    if (resolved != null)
-      input.setUri(resolved)
   }
 
   public void open(Input input) throws IOException, ResolverException {
