@@ -11,8 +11,8 @@ To use either of the plugins, you must load them in your
 
 ```
 plugins {
-  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.3'
-  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.3'
+  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.6'
+  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.6'
 }
 ```
 
@@ -87,7 +87,8 @@ task schemaValidate(type: RelaxNgValidationTask) {
 
 ## Validation
 
-The validation properties are:
+The validation properties are listed below. Most of them correspond to
+the *jing* command line options.
 
 * `input` (File, required) The file to validate.
 * `schema` (File, required) The schema to use for validation.
@@ -100,35 +101,46 @@ The validation properties are:
 * `encoding` (String) The encoding to use when reading the (compact) schema.
 * `feasible` (Boolean) Test if the document is feasibly valid.
 * `idref` (Boolean) Perform ID/IDREF validation.
+* `parallel` (Boolean) Run multiple validation jobs in parallel.
 
-A note about the `output` property. If you specify an output location, what appears there
+A note about the `output` property: if you specify an output location, what appears there
 is an exact copy of the input document. RELAX NG validation doesn’t augment the instance
 document. This option is only provided because it makes the up-to-date checking features
 of Gradle more convenient.
 
 ## Translation
 
-The translation properties are:
+The translation properties are listed below. Most of them correspond to the
+*trang* command line options. Many apply only when converting from a DTD.
+See the *trang* documentation for more details.
 
 * `input` (File, required) The input file to translate.
 * `output` (File, required) The location where the translated schema should be written.
-* `annotationPrefix` () FIXME: describe.
-* `anyName` () FIXME: describe.
-* `attlistDefine` () FIXME: describe.
-* `colonReplacement` () FIXME: describe.
+* `annotationPrefix` (String) The prefix to use for DTD compatibility annotations. Defaults
+  to `a` unless that conflicts with another namespace.
+* `anyName` (String) The of the definition generated for the content of elements in a
+  DTD that have a content model of `ANY`.
+* `attlistDefine` (String) Specifies how to construct the definitions representing
+  attribute lists.
+* `colonReplacement` (String) A list of characters to substitute for colons if a
+  DTD contains element names with colons. (Colons are not allowed in RELAX-NG pattern names.)
 * `debug` (Boolean) Print debugging information about the translation configuration
-* `elementDefine` () FIXME: describe.
+* `elementDefine` (String) Specifies how to construct the definitions representing
+  elements.
 * `encoding` (String) The input (and output) encoding, defaults to “unspecified”.
-* `generateStart (Boolean) FIXME: describe.
+* `generateStart` (Boolean) If true, a `start` element will be generated.
 * `indent` (Integer) Output line indent distance.
-* `inlineAttlist (Boolean) FIXME: describe.
+* `inlineAttlist` (Boolean) If true, attribute definitions will be inlined into element
+  definitions instead of creating a separate pattern for the attribute lists.
 * `inputEncoding` (String) The input encoding, defaults to `encoding`.
 * `inputType` (String) The input schema type, taken from the file extension by default.
 * `lineLength` (Integer) Maximum output line length.
 * `namespace` (String) Namespace bindings.
 * `outputEncoding` (String) The output encoding, defaults to `encoding`.
 * `outputType` (String) The output schema type, taken from the file extension by default.
-* `strictAny` () FIXME: describe.
+* `strictAny` (Boolean) If true, will preserve the exact content models of `ANY` elements,
+  instead of using wildcards.
+* `parallel` (Boolean) Run multiple validation jobs in parallel.
 
 The `namespace` property may be repeated. Each namespace should be encoded like an XML
 namespace binding, for example:
@@ -137,6 +149,24 @@ namespace binding, for example:
   namespace("xmlns=http://docbook.org/ns/docbook")
   namespace("xmlns:xlink=http://www.w3.org/1999/xlink")
 ```
+
+Where *trang* has several pairs of options of the form `--something`
+and `--no-something`, the plugin uses a boolean option with the name
+`something`. A value of true corresponds to the former, false to the
+latter.
+
+## Parallelism
+
+The plugins can use the Gradle work queue to run in parallel. This
+seems to work fine for small-to-medium size builds. For very large
+builds (hundreds of validation or translation tasks), it sometimes
+generates spurious I/O errors.
+
+I can’t work out why and I have some suspicion that the problem may
+reside in the implementation of work queues, not these plugins. For
+the meantime, I’ve added a `parallel` option. If you set it to true,
+the jobs will run in parallel, otherwise they won’t. By default, jobs
+are run sequentially, not in parallel.
 
 ## Examples
 
