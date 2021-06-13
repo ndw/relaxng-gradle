@@ -28,7 +28,7 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
   protected final Map<String, Object> options = [:]
   protected final Map<String, Object> pluginOptions = [:]
 
-  protected String pluginConfig = RelaxNGTranslatePluginConfigurations.DEFAULT
+  protected String pluginConfig = RelaxNGTranslatePluginExtension.DEFAULT
 
   private final WorkerExecutor workerExecutor
 
@@ -50,18 +50,18 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
 
   Object getOption(String name) {
     return name in options ? options[name] :
-      RelaxNGTranslatePluginConfigurations.instance.getOptions(pluginConfig)[name]
+      project.relaxng_translate.getOptions(pluginConfig)[name]
   }
 
   Object getPluginOption(String name) {
     return name in pluginOptions ? pluginOptions[name] :
-      RelaxNGTranslatePluginConfigurations.instance.getPluginOptions(pluginConfig)[name]
+      project.relaxng_translate.getPluginOptions(pluginConfig)[name]
   }
 
   // ============================================================
 
   void pluginConfiguration(String name) {
-    if (RelaxNGTranslatePluginConfigurations.instance.knownConfiguration(name)) {
+    if (name in project.relaxng_translate.configurations()) {
       pluginConfig = name
     } else {
       throw new InvalidUserDataException("Unknown RelaxNG plugin configuration: ${name}")
@@ -109,7 +109,7 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
     args["input"] = new ArrayList<String>()
     args["namespace"] = new ArrayList<String>()
 
-    RelaxNGTranslatePluginConfigurations.instance.getOptions(pluginConfig).findAll { name, value ->
+    project.relaxng_translate.getOptions(pluginConfig).each { name, value ->
       if (name == "errorHandler") {
         handler = value
       } else {
@@ -117,7 +117,7 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
       }
     }
 
-    this.options.findAll { name, value ->
+    this.options.each { name, value ->
       if (name == "errorHandler") {
         handler = value
       } else {
@@ -130,7 +130,6 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
     // doesn't get to the WorkQueue because it can't be serialized. Or something.
     // https://discuss.gradle.org/t/is-it-possible-to-pass-a-value-out-of-an-extension-task/40143
     if (handler == null && getPluginOption(PARALLEL_OPTION) != null) {
-      println("${handler}, ${getPluginOption(PARALLEL_OPTION)}")
       parallel = getPluginOption(PARALLEL_OPTION)
     }
 

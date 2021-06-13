@@ -28,7 +28,7 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
   protected final Map<String, Object> options = [:]
   protected final Map<String, Object> pluginOptions = [:]
 
-  protected String pluginConfig = RelaxNGValidatePluginConfigurations.DEFAULT
+  protected String pluginConfig = RelaxNGValidatePluginExtension.DEFAULT
 
   private final WorkerExecutor workerExecutor
 
@@ -50,18 +50,18 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
 
   Object getOption(String name) {
     return name in options ? options[name] :
-      RelaxNGValidatePluginConfigurations.instance.getOptions(pluginConfig)[name]
+      project.relaxng_validate.getOptions(pluginConfig)[name]
   }
 
   Object getPluginOption(String name) {
     return name in pluginOptions ? pluginOptions[name] :
-      RelaxNGValidatePluginConfigurations.instance.getPluginOptions(pluginConfig)[name]
+      project.relaxng_validate.getPluginOptions(pluginConfig)[name]
   }
 
   // ============================================================
 
   void pluginConfiguration(String name) {
-    if (RelaxNGValidatePluginConfigurations.instance.knownConfiguration(name)) {
+    if (name in project.relaxng_validate.configurations()) {
       pluginConfig = name
     } else {
       throw new InvalidUserDataException("Unknown RelaxNG plugin configuration: ${name}")
@@ -105,7 +105,7 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
   void run() {
     Object handler = null
     Map<String,String> args = [:]
-    RelaxNGValidatePluginConfigurations.instance.getOptions(pluginConfig).findAll { name, value ->
+    project.relaxng_validate.getOptions(pluginConfig).each { name, value ->
       if (name == "errorHandler") {
         handler = value
       } else {
@@ -113,7 +113,7 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
       }
     }
 
-    this.options.findAll { name, value ->
+    this.options.each { name, value ->
       if (name == "errorHandler") {
         handler = value
       } else {

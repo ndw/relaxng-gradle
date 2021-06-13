@@ -4,13 +4,53 @@ import org.gradle.api.Project
 import org.gradle.api.Plugin
 
 abstract class RelaxNGValidatePluginExtension {
+  public static final String DEFAULT = "com.nwalsh.gradle.relaxng-validate.DEFAULT"
+  private Map<String,RelaxNGValidatePluginConfiguration> configs = new HashMap<>()
+
   void configure(Closure cl) {
-    this.configure(RelaxNGValidatePluginConfigurations.DEFAULT, cl)
+    this.configure(DEFAULT, cl)
   }
   
   void configure(String name, Closure cl) {
-    cl.delegate = new RelaxNGValidatePluginConfiguration(name)
+    if (!(name in configs)) {
+      configs[name] = new RelaxNGValidatePluginConfiguration(name)
+    }
+    cl.delegate = configs[name]
     cl()
+  }
+
+  Map<String,Object> getOptions(String name) {
+    Map<String,Object> opts = [:]
+    if (DEFAULT in configs) {
+      configs[DEFAULT].getOptions().each { key, val ->
+        opts[key] = val
+      }
+    }
+    if (name in configs) {
+      configs[name].getOptions().each { key, val ->
+        opts[key] = val
+      }
+    }
+    return opts
+  }
+
+  Map<String,Object> getPluginOptions(String name) {
+    Map<String,Object> opts = [:]
+    if (DEFAULT in configs) {
+      configs[DEFAULT].getPluginOptions().each { key, val ->
+        opts[key] = val
+      }
+    }
+    if (name in configs) {
+      configs[name].getPluginOptions().each { key, val ->
+        opts[key] = val
+      }
+    }
+    return opts
+  }
+
+  Set<String> configurations() {
+    return configs.keySet()
   }
 }
 
