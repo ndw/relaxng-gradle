@@ -50,18 +50,18 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
 
   Object getOption(String name) {
     return name in options ? options[name] :
-      project.relaxng_validate.getOptions(pluginConfig)[name]
+      project.relaxng_validator.getOptions(pluginConfig)[name]
   }
 
   Object getPluginOption(String name) {
     return name in pluginOptions ? pluginOptions[name] :
-      project.relaxng_validate.getPluginOptions(pluginConfig)[name]
+      project.relaxng_validator.getPluginOptions(pluginConfig)[name]
   }
 
   // ============================================================
 
   void pluginConfiguration(String name) {
-    if (name in project.relaxng_validate.configurations()) {
+    if (name in project.relaxng_validator.configurations()) {
       pluginConfig = name
     } else {
       throw new InvalidUserDataException("Unknown RelaxNG plugin configuration: ${name}")
@@ -105,7 +105,7 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
   void run() {
     Object handler = null
     Map<String,String> args = [:]
-    project.relaxng_validate.getOptions(pluginConfig).each { name, value ->
+    project.relaxng_validator.getOptions(pluginConfig).each { name, value ->
       if (name == "errorHandler") {
         handler = value
       } else {
@@ -127,6 +127,10 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
     // https://discuss.gradle.org/t/is-it-possible-to-pass-a-value-out-of-an-extension-task/40143
     if (handler == null && getPluginOption(PARALLEL_OPTION) != null) {
       parallel = getPluginOption(PARALLEL_OPTION)
+    }
+
+    if (!parallel && getPluginOption("classpath") != null) {
+      println("The classpath option has no effect when validation tasks are not running in parallel")
     }
 
     if (getOption(INPUT_OPTION) != null) {

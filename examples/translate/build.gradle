@@ -20,9 +20,8 @@ configurations {
 dependencies {
   implementation (
     [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.0'],
-    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25' ],
-    [group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.1'],
-    [group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.1']
+    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30' ],
+    [group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30' ]
   )
 }
 
@@ -117,3 +116,24 @@ task rnc_to_dtd_encodings2(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]
  strictAny
  annotationPrefix
 */
+
+// ============================================================
+
+task helloWorld() {
+  doLast {
+    println("Hello, world")
+  }
+  
+  doFirst {
+    mkdir "build"
+  }
+
+  doLast {
+    relaxng_translate {
+      input "${projectDir}/src/doc.dtd"
+      output "${buildDir}/doc_start.rnc"
+      generateStart true
+      debug true
+    }
+  }
+}

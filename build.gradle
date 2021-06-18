@@ -8,7 +8,7 @@ sourceCompatibility = 1.8
 
 dependencies {
   implementation gradleApi()
-  implementation 'org.xmlresolver:xmlresolver:3.0.0'
+  implementation "org.xmlresolver:xmlresolver:${xmlresolverVersion}"
   implementation 'org.relaxng:jing:20181222'
   implementation 'org.relaxng:trang:20181222'
 
@@ -27,7 +27,7 @@ repositories {
 configurations.all {
   resolutionStrategy {
     force 'xml-apis:xml-apis:1.4.01'
-    force 'org.xmlresolver:xmlresolver:3.0.0'
+    force "org.xmlresolver:xmlresolver:${xmlresolverVersion}"
   }
 }
 

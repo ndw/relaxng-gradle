@@ -50,18 +50,18 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
 
   Object getOption(String name) {
     return name in options ? options[name] :
-      project.relaxng_translate.getOptions(pluginConfig)[name]
+      project.relaxng_translator.getOptions(pluginConfig)[name]
   }
 
   Object getPluginOption(String name) {
     return name in pluginOptions ? pluginOptions[name] :
-      project.relaxng_translate.getPluginOptions(pluginConfig)[name]
+      project.relaxng_translator.getPluginOptions(pluginConfig)[name]
   }
 
   // ============================================================
 
   void pluginConfiguration(String name) {
-    if (name in project.relaxng_translate.configurations()) {
+    if (name in project.relaxng_translator.configurations()) {
       pluginConfig = name
     } else {
       throw new InvalidUserDataException("Unknown RelaxNG plugin configuration: ${name}")
@@ -75,10 +75,6 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
 
   void output(Object output) {
     setOption(OUTPUT_OPTION, project.file(output).toString())
-  }
-
-  void schema(Object schema) {
-    setOption(SCHEMA_OPTION, schema)
   }
 
   @InputFiles
@@ -109,7 +105,7 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
     args["input"] = new ArrayList<String>()
     args["namespace"] = new ArrayList<String>()
 
-    project.relaxng_translate.getOptions(pluginConfig).each { name, value ->
+    project.relaxng_translator.getOptions(pluginConfig).each { name, value ->
       if (name == "errorHandler") {
         handler = value
       } else {
@@ -131,6 +127,10 @@ class RelaxNGTranslateTask extends DefaultTask implements RelaxNGTranslatePlugin
     // https://discuss.gradle.org/t/is-it-possible-to-pass-a-value-out-of-an-extension-task/40143
     if (handler == null && getPluginOption(PARALLEL_OPTION) != null) {
       parallel = getPluginOption(PARALLEL_OPTION)
+    }
+
+    if (!parallel && getPluginOption("classpath") != null) {
+      println("The classpath option has no effect when translation tasks are not running in parallel")
     }
 
     if (getOption(INPUT_OPTION) != null) {

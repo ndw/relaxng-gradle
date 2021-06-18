@@ -11,12 +11,12 @@ To use either of the plugins, you must load them in your
 
 ```
 plugins {
-  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.6'
-  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.6'
+  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.8'
+  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.8'
 }
 ```
 
-The plugins use the latest 3.0.0 release of
+The plugins use the latest 3.0.1beta3 release of
 [XML Resolver](https://github.com/xmlresolver/xmlresolver). You’ll need
 to make sure that you force resolution to use that version, if you have
 other, transitive dependencies on older versions.
@@ -24,7 +24,7 @@ other, transitive dependencies on older versions.
 ```
 configurations.all {
   resolutionStrategy {
-    force 'org.xmlresolver:xmlresolver:3.0.0'
+    force 'org.xmlresolver:xmlresolver:3.0.1beta3'
   }
 }
 ```
@@ -35,10 +35,9 @@ some logging framework, for example:
 ```
 dependencies {
   implementation (
-    [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.0'],
-    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25' ],
-    [group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.1'],
-    [group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.1']
+    [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.1beta3'],
+    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30' ],
+    [group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30' ]
   )
 }
 ```
@@ -53,15 +52,21 @@ import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
 
 ## Global configuration
 
+**NOTE:** The name of the global configuration objects changed in version 0.0.8.
+They used to be `relaxng_validate` and `relaxng_translate`, they’re now
+`relaxng_valdator` and `relaxng_translator`. That makes a little more sense
+grammatically, but more importantly, it means I can use the former names for
+standalone tasks.
+
 If you want the same options to apply to all (or many) tasks, you can create
 global configurations:
 
 ```
-relaxng_validate.configure {
+relaxng_validator.configure {
   // global configuration options for validation
 }
 
-relaxng_translate.configure {
+relaxng_translator.configure {
   // global configuration options for translation
 }
 ```
@@ -70,7 +75,7 @@ If you have multiple sets of tasks with similar options, you can create
 named configurations as well:
 
 ```
-relaxng_validate.configure("compact") {
+relaxng_validator.configure("compact") {
     compact true
 }
 ```
@@ -82,6 +87,67 @@ group of options:
 task schemaValidate(type: RelaxNgValidationTask) {
     pluginConfiguration("compact")
     // other properties here
+}
+```
+
+The configurations form a hierarchy, local values override named configuration values
+which, in turn, override the global (unnamed) configuration. Given:
+
+```
+relaxng_validator.configure {
+    debug true
+}
+
+relaxng_validator.configure("test") {
+    debug false
+}
+
+task firstCase(type: RelaxNgValidationTask) {
+    // debug is true
+}
+
+task secondCase(type: RelaxNgValidationTask) {
+    pluginConfiguration("test")
+    // debug is false
+}
+
+task secondCase(type: RelaxNgValidationTask) {
+    pluginConfiguration("test")
+    debug true
+    // debug is true
+}
+```
+
+## Standalone tasks
+
+Sometimes it’s convenient to just inline a few processes in a single task.
+The plugin provides global `relaxng_validate` and `relaxng_translate` functions
+for this purpose:
+
+```
+task translateAndValidate() {
+    doLast {
+        println("Translate")
+    }
+
+    doLast {
+        relaxng_translate {
+            input "src/schema.dtd"
+            output "build/schema.rng"
+        }
+    }
+
+    doLast {
+        println("Validate")
+    }
+
+    doLast {
+        relaxng_validate {
+            input "src/document.xml"
+            schema "build/schema.rng"
+            output "build/valid/document.xml"
+        }
+    }
 }
 ```
 

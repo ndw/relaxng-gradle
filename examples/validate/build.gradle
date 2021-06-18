@@ -39,18 +39,19 @@ import com.nwalsh.gradle.relaxng.util.CollectingErrorHandler
 //
 // This is a small build, so parallelism seems to be fine.
 // On big builds, not so much.
-relaxng_validate.configure {
+relaxng_validator.configure {
   classpath configurations.mytest
   parallel true
 }
 
 // This configuration uses compact schemas
-relaxng_validate.configure("rnc") {
+relaxng_validator.configure("rnc") {
   compact true
+  parallel false
 }
 
 // This configuration explicitly uses XML schemas
-relaxng_validate.configure("rng") {
+relaxng_validator.configure("rng") {
   compact false
 }
 
@@ -100,6 +101,7 @@ task invalid_no_fail_build(type: RelaxNGValidateTask) {
 task valid_crossref(type: RelaxNGValidateTask) {
   input "${projectDir}/src/crossref.xml"
   schema "${projectDir}/schema/idref.rnc"
+  pluginConfiguration("rnc")
 }
 
 task invalid_crossref(type: RelaxNGValidateTask) {
@@ -173,6 +175,8 @@ task no_schema(type: RelaxNGValidateTask) {
   schema "${buildDir}/does/not/exist.rng"
 }
 
+// ============================================================
+
 // Memory tests. If you drive Gradle too hard, you'll get
 // weird errors when Java runs out of memory. The only
 // hint is .hprof files littered about.
@@ -190,4 +194,25 @@ for (int i = 1; i < 200; i++) {
     compact false
   }
   task0.dependsOn t
+}
+
+// ============================================================
+
+task helloWorld() {
+  doLast {
+    println("Hello, world")
+  }
+  
+  doFirst {
+    mkdir "build"
+  }
+
+  doLast {
+    relaxng_validate {
+      input "${projectDir}/src/input.xml"
+      schema "${projectDir}/schema/doc.rng"
+      output "${buildDir}/input.xml"
+      pluginConfiguration("rng")
+    }
+  }
 }
