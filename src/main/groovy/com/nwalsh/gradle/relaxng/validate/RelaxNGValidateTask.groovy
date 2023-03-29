@@ -1,94 +1,127 @@
 package com.nwalsh.gradle.relaxng.validate
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.file.FileCollection
-import org.gradle.api.InvalidUserDataException
 
-import org.gradle.workers.WorkQueue
-import org.gradle.workers.WorkerExecutor
+import com.nwalsh.gradle.relaxng.util.RelaxNGTask
+import com.nwalsh.gradle.relaxng.util.JingResolver
 
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+import com.thaiopensource.util.PropertyMapBuilder
+import com.thaiopensource.util.UriOrFile
+import com.thaiopensource.validate.SchemaReader
+import com.thaiopensource.validate.ValidateProperty
+import com.thaiopensource.validate.ValidationDriver
+import com.thaiopensource.validate.prop.rng.RngProperty
+import com.thaiopensource.validate.rng.CompactSchemaReader
 import com.thaiopensource.xml.sax.ErrorHandlerImpl
 
-import javax.inject.Inject
+@SuppressWarnings('MethodCount')
+class RelaxNGValidateTask extends RelaxNGTask {
+  private Object inputPath = null
+  private Object schemaPath = null
+  private boolean assertInputValid = true
+  private Boolean compactSchema = null
+  private boolean feasiblyValid = false
+  private boolean idrefChecking = true
 
-class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOptions {
-  protected static final String INPUT_OPTION = 'input'
-  protected static final String OUTPUT_OPTION = 'output'
-  protected static final String SCHEMA_OPTION = 'schema'
-  protected static final String PARALLEL_OPTION = 'parallel'
-
-  protected final List<String> defaultArguments = [].asImmutable()
-
-  protected final Map<String, Object> options = [:]
-  protected final Map<String, Object> pluginOptions = [:]
-
-  protected String pluginConfig = RelaxNGValidatePluginExtension.DEFAULT
-
-  private final WorkerExecutor workerExecutor
-
-  @Inject
-  RelaxNGValidateTask(WorkerExecutor workerExecutor) {
-    super()
-    this.workerExecutor = workerExecutor
+  void input(Object input) {
+    inputPath = resolveResource(input)
+    if (inputPath instanceof File) {
+      inputPath = inputPath.toString()
+    }
+    show("Inp: ${inputPath}")
   }
 
-  // ============================================================
-
-  void setOption(String name, Object value) {
-    options[name] = value
+  void schema(Object input) {
+    schemaPath = resolveResource(input)
+    if (schemaPath instanceof File) {
+      schemaPath = schemaPath.toString()
+    }
+    show("Sch: ${schemaPath}")
   }
 
-  void setPluginOption(String name, Object value) {
-    pluginOptions[name] = value
+  void assertValid(Boolean valid) {
+    assertInputValid = valid
+    show("Opt: assertValid=${assertInputValid}")
   }
 
-  Object getOption(String name) {
-    return name in options ? options[name] :
-      project.relaxng_validator.getOptions(pluginConfig)[name]
+  void compact(Boolean compact) {
+    compactSchema = compact
+    show("Opt: compact=${compactSchema}")
   }
 
-  Object getPluginOption(String name) {
-    return name in pluginOptions ? pluginOptions[name] :
-      project.relaxng_validator.getPluginOptions(pluginConfig)[name]
+  void feasible(Boolean feas) {
+    feasiblyValid = feas
+    show("Opt: feasible=${feasiblyValid}")
   }
 
-  // ============================================================
+  void idref(Boolean check) {
+    idrefChecking = check
+    show("Opt: idref=${idrefChecking}")
+  }
 
-  void pluginConfiguration(String name) {
-    if (name in project.relaxng_validator.configurations()) {
-      pluginConfig = name
-    } else {
-      throw new InvalidUserDataException("Unknown RelaxNG plugin configuration: ${name}")
+  void options(Map optmap) {
+    optmap.each { entry ->
+      switch (entry.key) {
+        case 'input':
+          input(entry.value)
+          break
+        case 'schema':
+          schema(entry.value)
+          break
+        case 'output':
+          output(entry.value)
+          break
+        case 'catalog':
+          catalog(entry.value)
+          break
+        case 'assertValid':
+          assertValid(entry.value)
+          break
+        case 'compact':
+          compact(entry.value)
+          break
+        case 'debug':
+          debug(entry.value)
+          break
+        case 'encoding':
+          encoding(entry.value)
+          break
+        case 'feasible':
+          feasible(entry.value)
+          break
+        case 'idref':
+          idref(entry.value)
+          break
+        case 'errorHandler':
+          errorHandler(entry.value)
+          break
+        default:
+          show("Unknown option name; ignored: ${entry.key}")
+          break
+      }
     }
   }
 
-  void input(Object input) {
-    setOption(INPUT_OPTION, input)
-  }
-
-  void output(Object output) {
-    setOption(OUTPUT_OPTION, project.file(output))
-  }
-
-  void schema(Object schema) {
-    setOption(SCHEMA_OPTION, schema)
-  }
+  // ============================================================
 
   @InputFiles
   @SkipWhenEmpty
   FileCollection getInputFiles() {
     FileCollection files = project.files()
-    if (getOption(INPUT_OPTION) != null) {
-      files += project.files(getOption(INPUT_OPTION))
+    if (inputPath != null) {
+      files += project.files(inputPath)
     }
-    if (getOption(SCHEMA_OPTION) != null) {
-      files += project.files(getOption(SCHEMA_OPTION))
+    if (schemaPath != null) {
+      files += project.files(schemaPath)
     }
     return files
   }
@@ -96,67 +129,141 @@ class RelaxNGValidateTask extends DefaultTask implements RelaxNGValidatePluginOp
   @Optional
   @OutputFiles
   FileCollection getOutputFiles() {
-    if (getOption(OUTPUT_OPTION) != null) {
-      project.files(getOption(OUTPUT_OPTION))
+    FileCollection files = project.files([])
+    File output = resolveFile(outputFile)
+    if (output != null) {
+      files += project.files(output)
     }
+    return files
   }
 
   @TaskAction
+  @SuppressWarnings('AbcMetric')
+  @SuppressWarnings('MethodSize')
+  @SuppressWarnings('CyclomaticComplexity')
   void run() {
-    Object handler = null
-    Map<String,String> args = [:]
-    project.relaxng_validator.getOptions(pluginConfig).each { name, value ->
-      if (name == "errorHandler") {
-        handler = value
+    if (errorHandler == null) {
+      errorHandler = new ErrorHandlerImpl(System.out)
+    }
+
+    if (debug) {
+      println("RELAX NG Validation task:")
+      println("  Input source: ${inputPath}")
+      println("  Input schema: ${schemaPath}")
+      println("  Options:")
+      println("    Check idrefs? ${idrefChecking}")
+      println("    Compact syntax? ${compactSchema == null ? 'implicit' : compactSchema}")
+      println("    Feasibly valid? ${feasiblyValid}")
+      println("    Encoding: ${inputEncoding == null ? 'unspecified' : inputEncoding}")
+      println("    Fail task if invalid? ${assertInputValid}")
+      if (catalogList == null) {
+        println("    Catalogs: (system default catalogs)")
       } else {
-        args[name] = value.toString()
+        println("    Catalogs: ${catalogList}")
+      }
+      if (!errorHandler instanceof ErrorHandlerImpl) {
+        println("    Error handler: ${errorHandler.getClass().getName()}")
+      }
+      if (outputFile == null) {
+        println("  No output will be produced")
+      } else {
+        println("  Output result: ${outputFile}")
       }
     }
 
-    this.options.each { name, value ->
-      if (name == "errorHandler") {
-        handler = value
-      } else {
-        args[name] = value.toString()
+    PropertyMapBuilder properties = new PropertyMapBuilder();
+    properties.put(ValidateProperty.ERROR_HANDLER, errorHandler);
+
+    if (schemaPath == null) {
+      throw new IllegalArgumentException("No schema provided")
+    }
+
+    RngProperty.CHECK_ID_IDREF.add(properties);
+    if (!idrefChecking) {
+      properties.put(RngProperty.CHECK_ID_IDREF, null);
+    }
+
+    if (feasiblyValid) {
+      RngProperty.FEASIBLE.add(properties);
+    }
+
+    JingResolver resolver = new JingResolver(catalogList)
+    properties.put(ValidateProperty.RESOLVER, resolver)
+
+    SchemaReader sr = null
+    if (compactSchema != null && compactSchema) {
+      sr = CompactSchemaReader.getInstance()
+    }
+
+    try {
+      ValidationDriver driver = new ValidationDriver(properties.toPropertyMap(),
+                                                     properties.toPropertyMap(),
+                                                     sr)
+      InputSource insrc = ValidationDriver.uriOrFileInputSource(schemaPath)
+      //println("SCHEMA1: ${insrc.getSystemId()}")
+      if (inputEncoding != null) {
+        insrc.setEncoding(inputEncoding)
       }
-    }
-
-    boolean parallel = false
-    // If there's a handler, you can't have parallelism. The handler object
-    // doesn't get to the WorkQueue because it can't be serialized. Or something.
-    // https://discuss.gradle.org/t/is-it-possible-to-pass-a-value-out-of-an-extension-task/40143
-    if (handler == null && getPluginOption(PARALLEL_OPTION) != null) {
-      parallel = getPluginOption(PARALLEL_OPTION)
-    }
-
-    if (!parallel && getPluginOption("classpath") != null) {
-      println("The classpath option has no effect when validation tasks are not running in parallel")
-    }
-
-    if (getOption(INPUT_OPTION) != null) {
-      WorkQueue workQueue = null;
-      if (parallel) {
-        workQueue = workerExecutor.classLoaderIsolation() {
-          if (getPluginOption('classpath') != null) {
-            it.getClasspath().from(getPluginOption('classpath'))
+      boolean loaded = false
+      try {
+        loaded = driver.loadSchema(insrc)
+      } catch (SAXException se) {
+        // If we got a SAX exception loading the schema, and the user didn't
+        // explicitly specify a compact setting, and the schema filename
+        // ends with ".rnc", try again using the compact schema parser
+        if (compactSchema == null && schemaPath.toString().endsWith(".rnc")) {
+          if (debug) {
+            println("  Failed to load schema as XML, retrying as a compact syntax schema")
+          }
+          sr = CompactSchemaReader.getInstance()
+          driver = new ValidationDriver(properties.toPropertyMap(),
+                                        properties.toPropertyMap(),
+                                        sr)
+          insrc = ValidationDriver.uriOrFileInputSource(schemaPath)
+          //println("SCHEMA2: ${insrc.getSystemId()}")
+          if (inputEncoding != null) {
+            insrc.setEncoding(inputEncoding)
+          }
+          loaded = driver.loadSchema(insrc)
+        }
+      }
+      if (loaded) {
+        insrc = ValidationDriver.uriOrFileInputSource(inputPath)
+        //println("INPUT: ${insrc.getSystemId()}")
+        if (!driver.validate(insrc)) {
+          if (assertInputValid) {
+            throw new IllegalArgumentException("Document is invalid: ${inputPath}")
           }
         }
       } else {
-        if (handler == null) {
-          handler = new ErrorHandlerImpl(System.out)
-        }
+        throw new IllegalArgumentException("Failed to load schema: ${schemaPath}")
       }
+    } catch (SAXException se) {
+      errorHandler.error(new SAXParseException(se.getMessage(), null, se))
+      if (assertInputValid) {
+        throw se
+      }
+    } catch (IOException ioe) {
+      errorHandler.error(new SAXParseException(ioe.getMessage(), null, ioe))
+      if (assertInputValid) {
+        throw ioe
+      }
+    }
 
-      project.files(getOption(INPUT_OPTION)).each {
-        if (parallel) {
-          workQueue.submit(RelaxNGValidate) {
-            it.arguments.set(args)
-          }
-        } else {
-          RelaxNGValidateImpl impl = new RelaxNGValidateImpl(args, handler)
-          impl.execute()
-        }
+    if (outputFile != null) {
+      URL asUrl = new URL(UriOrFile.toUri(inputPath))
+      //println("COPY: ${asUrl}")
+      InputStream is = new BufferedInputStream(asUrl.openStream())
+      OutputStream os = new FileOutputStream(outputFile)
+      byte[] buffer = new byte[8192]
+      int len = is.read(buffer, 0, buffer.size())
+      while (len >= 0) {
+        os.write(buffer, 0, len)
+        len = is.read(buffer, 0, buffer.size())
       }
+      os.close()
+      is.close()
     }
   }
 }
+

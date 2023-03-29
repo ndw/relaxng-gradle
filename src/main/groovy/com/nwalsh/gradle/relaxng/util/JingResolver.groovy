@@ -42,7 +42,7 @@ class JingResolver extends com.thaiopensource.resolver.AbstractResolver {
         absoluteUri = null
       }
     } catch (ResolverException ex) {
-      // ignore
+      absoluteUri = null // irrelevant, but satisfies CodeNarc
     }
 
     boolean isExternalIdentifier = (id instanceof ExternalIdentifier)

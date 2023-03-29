@@ -1,5 +1,9 @@
 plugins {
-  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.3'
+  id 'com.nwalsh.gradle.relaxng.validate' version '0.9.0'
+}
+
+wrapper {
+  gradleVersion = '8.0'
 }
 
 repositories {
@@ -7,53 +11,18 @@ repositories {
   mavenLocal()
 }
 
-configurations.all {
-  resolutionStrategy {
-    force 'xml-apis:xml-apis:1.4.01',
-      'org.xmlresolver:xmlresolver:3.0.0'
-  }
-}
-
-configurations {
-  mytest.extendsFrom(implementation)
-}
-
-dependencies {
-  implementation (
-    [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.0'],
-    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25' ],
-    [group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.1'],
-    [group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.1']
-  )
-}
-
 import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
 import com.nwalsh.gradle.relaxng.util.CollectingErrorHandler
 
-// You don't have to use configurations, these are just examples.
+def debugTasks = false
 
-// Use a particular classpath. Also, this configuration
-// doesn't specify a 'compact' setting. With no compact setting,
-// the validator will try to load an XML schema. If it fails
-// it'll try to load the schema as a compact schema.
-//
-// This is a small build, so parallelism seems to be fine.
-// On big builds, not so much.
-relaxng_validator.configure {
-  classpath configurations.mytest
-  parallel true
-}
+def rncOptions = [
+  'compact': true,
+]
 
-// This configuration uses compact schemas
-relaxng_validator.configure("rnc") {
-  compact true
-  parallel false
-}
-
-// This configuration explicitly uses XML schemas
-relaxng_validator.configure("rng") {
-  compact false
-}
+def rngOptions = [
+  'compact': false
+]
 
 defaultTasks 'valid_no_output', 'valid_output', 'valid_implicit_rnc',
 'valid_explicit_rnc', 'invalid_no_fail_build', 'valid_crossref',
@@ -62,98 +31,124 @@ defaultTasks 'valid_no_output', 'valid_output', 'valid_implicit_rnc',
 'feasible_valid'
 
 task valid_no_output(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/input.xml"
   schema "${projectDir}/schema/doc.rng"
-  compact false
+  debug debugTasks
 }
 
 task valid_output(type: RelaxNGValidateTask) {
   input "${projectDir}/src/input.xml"
   schema "${projectDir}/schema/doc.rng"
   output "${buildDir}/input.xml"
-  pluginConfiguration("rng")
+  options(rngOptions)
+  debug debugTasks
 }
 
 // Debug will show you the options used for validation
 task valid_implicit_rnc(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/input.xml"
   schema "${projectDir}/schema/doc.rnc"
-  debug true
+  debug debugTasks
 }
 
 task valid_explicit_rnc(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/input.xml"
   schema "${projectDir}/schema/doc.rnc"
+  compact true
+  debug debugTasks
 }
 
 task invalid_no_fail_build(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   def eh = new CollectingErrorHandler(System.out)
   input "${projectDir}/src/invalid.xml"
   schema "${projectDir}/schema/doc.rng"
   errorHandler eh
   compact false
   assertValid false
+  debug debugTasks
   doLast {
     println("Errors: ${eh.errorCount()}")
   }
 }
 
 task valid_crossref(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/crossref.xml"
   schema "${projectDir}/schema/idref.rnc"
-  pluginConfiguration("rnc")
+  options(rncOptions)
+  debug debugTasks
 }
 
 task invalid_crossref(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/invalidref.xml"
   schema "${projectDir}/schema/idref.rnc"
   assertValid false
+  debug debugTasks
 }
 
 task valid_ignore_crossref(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/invalidref.xml"
   schema "${projectDir}/schema/idref.rnc"
   idref false
+  debug debugTasks
 }
 
 task valid_encoding(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/crossref.xml"
   schema "${projectDir}/schema/idref.rnc"
   // This is the schema encoding, which isn't really iso8859-1, but
   // it doesn't contain any characters that would be different if
   // it was, so it's good enough for a test
   encoding "iso8859-1"
+  debug debugTasks
 }
 
 task valid_catalog(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/extid.xml"
   schema "${projectDir}/schema/idref.rnc"
   catalog "${projectDir}/src/catalog.xml"
+  debug debugTasks
 }
 
 task valid_no_catalog(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/extid.xml"
   schema "${projectDir}/schema/idref.rnc"
   assertValid false
+  debug debugTasks
 }
 
 task feasible_no_fail_build(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/feasible.xml"
   schema "${projectDir}/schema/doc.rng"
   assertValid false
+  debug debugTasks
 }
 
 task feasible_valid(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/feasible.xml"
   schema "${projectDir}/schema/doc.rng"
   assertValid false
   feasible true
+  debug debugTasks
 }
 
 task no_schema_no_fail_build(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
   input "${projectDir}/src/feasible.xml"
   schema "${buildDir}/does/not/exist.rng"
   assertValid false
+  debug debugTasks
 }
 
 // Tasks below here cause the build to fail
@@ -161,58 +156,19 @@ task no_schema_no_fail_build(type: RelaxNGValidateTask) {
 task invalid(type: RelaxNGValidateTask) {
   input "${projectDir}/src/invalid.xml"
   schema "${projectDir}/schema/doc.rng"
-  pluginConfiguration("rng")
+  options(rngOptions)
+  debug debugTasks
 }
 
 task schema_unloadable(type: RelaxNGValidateTask) {
   input "${projectDir}/src/input.xml"
   schema "${projectDir}/schema/doc.rng"
   compact true // this is a lie!
+  debug debugTasks
 }
 
 task no_schema(type: RelaxNGValidateTask) {
   input "${projectDir}/src/feasible.xml"
   schema "${buildDir}/does/not/exist.rng"
-}
-
-// ============================================================
-
-// Memory tests. If you drive Gradle too hard, you'll get
-// weird errors when Java runs out of memory. The only
-// hint is .hprof files littered about.
-
-task task0(type: RelaxNGValidateTask) {
-  input "${projectDir}/src/input.xml"
-  schema "${projectDir}/schema/doc.rng"
-  compact false
-}
-
-for (int i = 1; i < 200; i++) {
-  Task t = task "task${i}"(type: RelaxNGValidateTask) {
-    input "${projectDir}/src/input.xml"
-    schema "${projectDir}/schema/doc.rng"
-    compact false
-  }
-  task0.dependsOn t
-}
-
-// ============================================================
-
-task helloWorld() {
-  doLast {
-    println("Hello, world")
-  }
-  
-  doFirst {
-    mkdir "build"
-  }
-
-  doLast {
-    relaxng_validate {
-      input "${projectDir}/src/input.xml"
-      schema "${projectDir}/schema/doc.rng"
-      output "${buildDir}/input.xml"
-      pluginConfiguration("rng")
-    }
-  }
+  debug debugTasks
 }

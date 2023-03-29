@@ -1,0 +1,6 @@
+<!ELEMENT a:doc (b:doc)+>
+<!ATTLIST a:doc
+  a:version CDATA "1.0"
+  b:version CDATA #REQUIRED>
+
+<!ELEMENT b:doc ANY>

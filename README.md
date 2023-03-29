@@ -9,22 +9,23 @@ plugin.
 To use either of the plugins, you must load them in your
 `build.gradle` file:
 
-```
+```gradle
 plugins {
-  id 'com.nwalsh.gradle.relaxng.validate' version '0.0.8'
-  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.8'
+  id 'com.nwalsh.gradle.relaxng.validate' version '0.10.0'
+  id 'com.nwalsh.gradle.relaxng.translate' version '0.10.0'
 }
 ```
 
-The plugins use the latest 3.0.1beta3 release of
-[XML Resolver](https://github.com/xmlresolver/xmlresolver). You’ll need
+The plugins require version 3.0.1 or later of the
+[XML Resolver](https://github.com/xmlresolver/xmlresolver); version 5.1.1
+is the latest at the time of this writing. You’ll need
 to make sure that you force resolution to use that version, if you have
 other, transitive dependencies on older versions.
 
-```
+```gradle
 configurations.all {
   resolutionStrategy {
-    force 'org.xmlresolver:xmlresolver:3.0.1beta3'
+    force 'org.xmlresolver:xmlresolver:5.1.1'
   }
 }
 ```
@@ -32,10 +33,10 @@ configurations.all {
 You’ll need to include the latest resolver in your dependencies and
 some logging framework, for example:
 
-```
+```gradle
 dependencies {
   implementation (
-    [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.1beta3'],
+    [group: 'org.xmlresolver', name: 'xmlresolver', version: '5.1.1'],
     [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30' ],
     [group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30' ]
   )
@@ -45,109 +46,31 @@ dependencies {
 Finally, import the task(s). Import `RelaxNgValidateTask` to perform
 validation, `RelaxNgTranslateTask` to perform translation.
 
-```
+```gradle
 import com.nwalsh.gradle.relaxng.validate.RelaxNGValidateTask
 import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
 ```
 
-## Global configuration
+## Configuration
 
-**NOTE:** The name of the global configuration objects changed in version 0.0.8.
-They used to be `relaxng_validate` and `relaxng_translate`, they’re now
-`relaxng_valdator` and `relaxng_translator`. That makes a little more sense
-grammatically, but more importantly, it means I can use the former names for
-standalone tasks.
+Earlier versions of these plugins attempted to provide a mechanism for
+global configuration. That approach wasn’t good Gradle practice so
+it’s been removed.
 
-If you want the same options to apply to all (or many) tasks, you can create
-global configurations:
+Both of the tasks now have an `options` method that accepts a map. You
+can use global declaratiosn to share configuration information. For
+example:
 
-```
-relaxng_validator.configure {
-  // global configuration options for validation
-}
-
-relaxng_translator.configure {
-  // global configuration options for translation
-}
-```
-
-If you have multiple sets of tasks with similar options, you can create
-named configurations as well:
-
-```
-relaxng_validator.configure("compact") {
-    compact true
-}
-```
-
-The `pluginConfiguration` property allows you to refer to that whole, named
-group of options:
-
-```
-task schemaValidate(type: RelaxNgValidationTask) {
-    pluginConfiguration("compact")
-    // other properties here
-}
-```
-
-The configurations form a hierarchy, local values override named configuration values
-which, in turn, override the global (unnamed) configuration. Given:
-
-```
-relaxng_validator.configure {
-    debug true
-}
-
-relaxng_validator.configure("test") {
-    debug false
-}
-
-task firstCase(type: RelaxNgValidationTask) {
-    // debug is true
-}
-
-task secondCase(type: RelaxNgValidationTask) {
-    pluginConfiguration("test")
-    // debug is false
-}
-
-task secondCase(type: RelaxNgValidationTask) {
-    pluginConfiguration("test")
-    debug true
-    // debug is true
-}
-```
-
-## Standalone tasks
-
-Sometimes it’s convenient to just inline a few processes in a single task.
-The plugin provides global `relaxng_validate` and `relaxng_translate` functions
-for this purpose:
-
-```
-task translateAndValidate() {
-    doLast {
-        println("Translate")
-    }
-
-    doLast {
-        relaxng_translate {
-            input "src/schema.dtd"
-            output "build/schema.rng"
-        }
-    }
-
-    doLast {
-        println("Validate")
-    }
-
-    doLast {
-        relaxng_validate {
-            input "src/document.xml"
-            schema "build/schema.rng"
-            output "build/valid/document.xml"
-        }
-    }
+```gradle
+def commonOpts = [
+    'debug': true,
+    'catalog': 'catalog.xml;src/catalog.xml'
+]
+…
+task someTask(type: RelaxNGValidateTask) {
+    input "${projectDir}/src/doc.xml"
+    schema "${projectDir}/src/schema.rng"
+    options(commonOpts)
 }
 ```
 
@@ -167,7 +90,6 @@ the *jing* command line options.
 * `encoding` (String) The encoding to use when reading the (compact) schema.
 * `feasible` (Boolean) Test if the document is feasibly valid.
 * `idref` (Boolean) Perform ID/IDREF validation.
-* `parallel` (Boolean) Run multiple validation jobs in parallel.
 
 A note about the `output` property: if you specify an output location, what appears there
 is an exact copy of the input document. RELAX NG validation doesn’t augment the instance
@@ -221,19 +143,21 @@ and `--no-something`, the plugin uses a boolean option with the name
 `something`. A value of true corresponds to the former, false to the
 latter.
 
-## Parallelism
-
-The plugins can use the Gradle work queue to run in parallel. This
-seems to work fine for small-to-medium size builds. For very large
-builds (hundreds of validation or translation tasks), it sometimes
-generates spurious I/O errors.
-
-I can’t work out why and I have some suspicion that the problem may
-reside in the implementation of work queues, not these plugins. For
-the meantime, I’ve added a `parallel` option. If you set it to true,
-the jobs will run in parallel, otherwise they won’t. By default, jobs
-are run sequentially, not in parallel.
-
 ## Examples
 
 You’ll find complete examples in the `examples` directory.
+
+## Change log
+
+### Version 0.10.0
+
+This is a significant refactor from the previous release. All of the
+attempts to provide global configuration have been removed (they
+didn’t play nice with Gradle best practices). Instead, there’s a
+simple `options()` option that allows you to pass in a map of options.
+You can use variables in the build script to share configurations
+between tasks.
+
+The attempts at parallelism have also been removed. I’m not convinced
+they ever actually offered any functionality given that the tasks
+don’t accept multiple inputs.
