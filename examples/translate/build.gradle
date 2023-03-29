@@ -1,5 +1,9 @@
 plugins {
-  id 'com.nwalsh.gradle.relaxng.translate' version '0.0.3'
+  id 'com.nwalsh.gradle.relaxng.translate' version '0.9.0'
+}
+
+wrapper {
+  gradleVersion = '8.0'
 }
 
 repositories {
@@ -7,46 +11,40 @@ repositories {
   mavenLocal()
 }
 
-configurations.all {
-  resolutionStrategy {
-    force 'org.xmlresolver:xmlresolver:3.0.0'
-  }
-}
-
-configurations {
-  mytest.extendsFrom(implementation)
-}
-
-dependencies {
-  implementation (
-    [group: 'org.xmlresolver', name: 'xmlresolver', version: '3.0.0'],
-    [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30' ],
-    [group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30' ]
-  )
-}
-
 import com.nwalsh.gradle.relaxng.translate.RelaxNGTranslateTask
 import com.nwalsh.gradle.relaxng.util.CollectingErrorHandler
 
-defaultTasks 'dtd_to_rnc', 'dtd_to_rnc_inlined', 'dtd_to_rnc_nostart',
-'rnc_to_rng', 'rng_to_rnc', 'rnc_to_xsd', 'dtd_to_rnc_with_namespaces',
-'xml_to_xsd', 'rnc_to_dtd_encodings1', 'rnc_to_dtd_encodings2'
+def debugTasks = false
+
+defaultTasks 'dtd_to_rnc', 'dtd_to_rng', 'dtd_to_rnc_inlined', 'dtd_to_rnc_nostart',
+  'rnc_to_rng', 'rng_to_rnc', 'rnc_to_xsd', 'dtd_to_rnc_with_namespaces',
+  'xml_to_xsd', 'rnc_to_dtd_encodings1', 'rnc_to_dtd_encodings2',
+  'dtd_to_rnc_colons1', 'dtd_to_rnc_colons2', 'dtd_to_rnc_colons3', 'dtd_to_rnc_colons4' 
 
 task dtd_to_rnc(type: RelaxNGTranslateTask) {
   input "${projectDir}/src/doc.dtd"
   output "${buildDir}/doc.rnc"
+  debug debugTasks
+}
+
+task dtd_to_rng(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/doc.dtd"
+  output "${buildDir}/doc.rng"
+  debug debugTasks
 }
 
 task dtd_to_rnc_inlined(type: RelaxNGTranslateTask) {
   input "${projectDir}/src/doc.dtd"
   output "${buildDir}/doc_inlined.rnc"
   inlineAttlist true
+  debug debugTasks
 }
 
 task dtd_to_rnc_nostart(type: RelaxNGTranslateTask) {
   input "${projectDir}/src/doc.dtd"
   output "${buildDir}/doc_nostart.rnc"
   generateStart false
+  debug debugTasks
 }
 
 task rnc_to_rng(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
@@ -54,18 +52,23 @@ task rnc_to_rng(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
   output "${buildDir}/doc.rng"
   inputType "rnc"
   outputType "rng"
+  debug debugTasks
 }
 
-task rng_to_rnc(type: RelaxNGTranslateTask, dependsOn: ["rnc_to_rng"]) {
+task rng_to_rnc(
+  type: RelaxNGTranslateTask,
+  dependsOn: ["rnc_to_rng", "dtd_to_rng"]
+) {
   input rnc_to_rng.outputs.files.singleFile
   output "${buildDir}/doc-rnc.rnc"
+  debug debugTasks
 }
 
 task rnc_to_xsd(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
   input dtd_to_rnc.outputs.files.singleFile
   output "${buildDir}/schema.xml"
   outputType "xsd"
-  debug true
+  debug debugTasks
 }
 
 task dtd_to_rnc_with_namespaces(type: RelaxNGTranslateTask) {
@@ -73,11 +76,11 @@ task dtd_to_rnc_with_namespaces(type: RelaxNGTranslateTask) {
 
   input "${projectDir}/src/doc.dtd"
   output "${buildDir}/namespaced.rnc"
-  namespace("xmlns=http://example.com/")
+  namespace "xmlns=http://example.com/"
   // XLink isn't actually used, this is just an example
   namespace("xmlns:xlink=http://www.w3.org/1999/xlink")
-  debug true
   errorHandler handler
+  debug debugTasks
 
   doLast {
     println("Warnings: ${handler.warningCount()}")
@@ -90,13 +93,14 @@ task xml_to_xsd(type: RelaxNGTranslateTask) {
   output "${buildDir}/autogen.xsd"
   indent 4
   lineLength 60
+  debug debugTasks
 }
 
 task rnc_to_dtd_encodings1(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
   input dtd_to_rnc.outputs.files.singleFile
   output "${buildDir}/8859-1.dtd"
   encoding "iso8859-1"
-  debug true
+  debug debugTasks
 }
 
 task rnc_to_dtd_encodings2(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]) {
@@ -104,36 +108,45 @@ task rnc_to_dtd_encodings2(type: RelaxNGTranslateTask, dependsOn: ["dtd_to_rnc"]
   output "${buildDir}/8859-2.dtd"
   inputEncoding "utf-8"
   outputEncoding "iso8859-1"
-  debug true
+  debug debugTasks
 }
 
-/*
- FIXME: Examples for these options:
- colonReplacement
- elementDefine
- attlistDefine
- anyName
- strictAny
- annotationPrefix
-*/
+task dtd_to_rnc_colons1(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/colons.dtd"
+  output "${buildDir}/colons1.rnc"
+  namespace "a=http://example.com/AAA"
+  namespace "b=http://example.com/BBB"
+  debug debugTasks
+}
 
-// ============================================================
+task dtd_to_rnc_colons2(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/colons.dtd"
+  output "${buildDir}/colons2.rnc"
+  colonReplacement "_"
+  namespace "a=http://example.com/AAA"
+  namespace "b=http://example.com/BBB"
+  debug debugTasks
+}
 
-task helloWorld() {
-  doLast {
-    println("Hello, world")
-  }
-  
-  doFirst {
-    mkdir "build"
-  }
+task dtd_to_rnc_colons3(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/colons.dtd"
+  output "${buildDir}/colons3.rnc"
+  elementDefine "X_%_Y"
+  attlistDefine "A_%_B"
+  anyName "isany"
+  namespace "a=http://example.com/AAA"
+  namespace "b=http://example.com/BBB"
+  debug debugTasks
+}
 
-  doLast {
-    relaxng_translate {
-      input "${projectDir}/src/doc.dtd"
-      output "${buildDir}/doc_start.rnc"
-      generateStart true
-      debug true
-    }
-  }
+task dtd_to_rnc_colons4(type: RelaxNGTranslateTask) {
+  input "${projectDir}/src/colons.dtd"
+  output "${buildDir}/colons4.rnc"
+  elementDefine "X_%_Y"
+  attlistDefine "A_%_B"
+  strictAny true
+  annotationPrefix "ANNO"
+  namespace "a=http://example.com/AAA"
+  namespace "b=http://example.com/BBB"
+  debug debugTasks
 }
