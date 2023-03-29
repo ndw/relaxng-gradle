@@ -63,6 +63,6 @@ jobs:
             build/distributions/relaxng-gradle-${{ env.CI_TAG }}.zip
 
       - name: Publish plugin
-        if: ${{ env.HAVE_GPGKEYURI == 'true' && env.CI_BRANCH == 'main' && env.CI_TAG != '' }}
+        if: ${{ env.HAVE_ACCESS_TOKEN == 'true' && env.CI_BRANCH == 'main' && env.CI_TAG != '' }}
         run: |
           ./gradlew publishPlugins -Pgradle.publish.key=${{ secrets.PUBLISH_KEY }} -Pgradle.publish.secret=${{ secrets.PUBLISH_SECRET }}
