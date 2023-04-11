@@ -142,8 +142,10 @@ class RelaxNGValidateTask extends RelaxNGTask {
   @SuppressWarnings('MethodSize')
   @SuppressWarnings('CyclomaticComplexity')
   void run() {
+    boolean userSuppliedErrorHandler = true
     if (errorHandler == null) {
       errorHandler = new ErrorHandlerImpl(System.out)
+      userSuppliedErrorHandler = false
     }
 
     if (debug) {
@@ -215,6 +217,15 @@ class RelaxNGValidateTask extends RelaxNGTask {
           if (debug) {
             println("  Failed to load schema as XML, retrying as a compact syntax schema")
           }
+
+          if (!userSuppliedErrorHandler) {
+            // If we got errors from the attempt to load the RNC file as
+            // an RNG file, and if we aren't using an error handler supplied
+            // by the user, toss out the error handler and make a new one.
+            errorHandler = new ErrorHandlerImpl(System.out)
+            properties.put(ValidateProperty.ERROR_HANDLER, errorHandler);
+          }
+
           sr = CompactSchemaReader.getInstance()
           driver = new ValidationDriver(properties.toPropertyMap(),
                                         properties.toPropertyMap(),
