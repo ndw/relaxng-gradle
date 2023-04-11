@@ -28,7 +28,8 @@ defaultTasks 'valid_no_output', 'valid_output', 'valid_implicit_rnc',
 'valid_explicit_rnc', 'invalid_no_fail_build', 'valid_crossref',
 'invalid_crossref', 'valid_ignore_crossref', 'valid_encoding',
 'valid_catalog', 'valid_no_catalog', 'feasible_no_fail_build',
-'feasible_valid'
+'feasible_valid', 'invalid_custom_error_handler',
+'invalid_redirect_errors'
 
 task valid_no_output(type: RelaxNGValidateTask) {
   outputs.upToDateWhen { false }
@@ -61,7 +62,7 @@ task valid_explicit_rnc(type: RelaxNGValidateTask) {
   debug debugTasks
 }
 
-task invalid_no_fail_build(type: RelaxNGValidateTask) {
+task invalid_custom_error_handler(type: RelaxNGValidateTask) {
   outputs.upToDateWhen { false }
   def eh = new CollectingErrorHandler(System.out)
   input "${projectDir}/src/invalid.xml"
@@ -73,6 +74,26 @@ task invalid_no_fail_build(type: RelaxNGValidateTask) {
   doLast {
     println("Errors: ${eh.errorCount()}")
   }
+}
+
+task invalid_redirect_errors(type: RelaxNGValidateTask) {
+  debug true
+  outputs.upToDateWhen { false }
+  input "${projectDir}/src/invalid.xml"
+  schema "${projectDir}/schema/doc.rng"
+  errorOutput "${buildDir}/redirected.txt"
+  compact false
+  assertValid false
+  debug debugTasks
+}
+
+task invalid_no_fail_build(type: RelaxNGValidateTask) {
+  outputs.upToDateWhen { false }
+  input "${projectDir}/src/invalid.xml"
+  schema "${projectDir}/schema/doc.rng"
+  compact false
+  assertValid false
+  debug debugTasks
 }
 
 task valid_crossref(type: RelaxNGValidateTask) {

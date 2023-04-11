@@ -1,5 +1,6 @@
 package com.nwalsh.gradle.relaxng.validate
 
+import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
@@ -31,6 +32,7 @@ class RelaxNGValidateTask extends RelaxNGTask {
   private Boolean compactSchema = null
   private boolean feasiblyValid = false
   private boolean idrefChecking = true
+  private OutputStream errorOutput = System.err
 
   void input(Object input) {
     inputPath = resolveResource(input)
@@ -39,6 +41,29 @@ class RelaxNGValidateTask extends RelaxNGTask {
     }
     show("Inp: ${inputPath}")
   }
+
+  void errorOutput(Object output) {
+    if (output instanceof OutputStream) {
+      errorOutput = output
+      show("Err: ${output}")
+      return
+    }
+
+    def errout = resolveResource(output)
+
+    // The output must be a File, not a URI
+    if (errout instanceof URI) {
+      if (errout.getScheme() == FILE_SCHEME) {
+        errout = new File(errout.getPath())
+      } else {
+        throw new GradleException("Error output must be a file or output stream.")
+      }
+    }
+
+    errorOutput = new FileOutputStream(errout);
+    show("Err: ${errout}")
+  }
+
 
   void schema(Object input) {
     schemaPath = resolveResource(input)
@@ -79,6 +104,9 @@ class RelaxNGValidateTask extends RelaxNGTask {
           break
         case 'output':
           output(entry.value)
+          break
+        case 'errorOutput':
+          errorOutput(entry.value)
           break
         case 'catalog':
           catalog(entry.value)
@@ -144,7 +172,7 @@ class RelaxNGValidateTask extends RelaxNGTask {
   void run() {
     boolean userSuppliedErrorHandler = true
     if (errorHandler == null) {
-      errorHandler = new ErrorHandlerImpl(System.out)
+      errorHandler = new ErrorHandlerImpl(errorOutput)
       userSuppliedErrorHandler = false
     }
 
