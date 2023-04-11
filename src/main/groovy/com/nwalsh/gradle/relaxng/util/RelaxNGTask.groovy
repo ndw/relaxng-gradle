@@ -43,7 +43,7 @@ abstract class RelaxNGTask extends DefaultTask {
         throw new GradleException("Output must be a file.")
       }
     }
-    show("Inp: ${outputFile}")
+    show("Out: ${outputFile}")
   }
 
   void catalog(Object catalog) {
