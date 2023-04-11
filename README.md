@@ -11,13 +11,13 @@ To use either of the plugins, you must load them in your
 
 ```gradle
 plugins {
-  id 'com.nwalsh.gradle.relaxng.validate' version '0.10.0'
-  id 'com.nwalsh.gradle.relaxng.translate' version '0.10.0'
+  id 'com.nwalsh.gradle.relaxng.validate' version '0.10.4'
+  id 'com.nwalsh.gradle.relaxng.translate' version '0.10.4'
 }
 ```
 
 The plugins require version 3.0.1 or later of the
-[XML Resolver](https://github.com/xmlresolver/xmlresolver); version 5.1.1
+[XML Resolver](https://github.com/xmlresolver/xmlresolver); version 5.1.2
 is the latest at the time of this writing. You’ll need
 to make sure that you force resolution to use that version, if you have
 other, transitive dependencies on older versions.
@@ -25,7 +25,7 @@ other, transitive dependencies on older versions.
 ```gradle
 configurations.all {
   resolutionStrategy {
-    force 'org.xmlresolver:xmlresolver:5.1.1'
+    force 'org.xmlresolver:xmlresolver:5.1.2'
   }
 }
 ```
@@ -36,7 +36,7 @@ some logging framework, for example:
 ```gradle
 dependencies {
   implementation (
-    [group: 'org.xmlresolver', name: 'xmlresolver', version: '5.1.1'],
+    [group: 'org.xmlresolver', name: 'xmlresolver', version: '5.1.2'],
     [group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30' ],
     [group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30' ]
   )
@@ -82,6 +82,7 @@ the *jing* command line options.
 * `input` (File, required) The file to validate.
 * `schema` (File, required) The schema to use for validation.
 * `output` (File) The location where the validated document should be written.
+* `errorOutput` (File or OutputStream) The location where error messages are written.
 * `assertValid` (Boolean) If true (the default), schema validation errors cause the task to fail.
 * `catalog` (String) A catalog file to use during parsing. You can repeat this option.
 * `classpath` (String) Specify a classpath (if you have a custom datatype library, for example).
@@ -91,10 +92,18 @@ the *jing* command line options.
 * `feasible` (Boolean) Test if the document is feasibly valid.
 * `idref` (Boolean) Perform ID/IDREF validation.
 
-A note about the `output` property: if you specify an output location, what appears there
+### Notes
+
+On the `output` property: if you specify an output location, what appears there
 is an exact copy of the input document. RELAX NG validation doesn’t augment the instance
 document. This option is only provided because it makes the up-to-date checking features
 of Gradle more convenient.
+
+On the `errorOutput` property: this only applies if you use the default error handler. If
+you provide a custom error handler, you’re responsible for managing where the messages
+go. In earlier versions of this plugin, the default was `stdout`. The default in 0.10.4
+and later is `stderr`. (See [standard streams](https://en.wikipedia.org/wiki/Standard_streams) for
+a discussion of `stdout` vs. `stderr`.)
 
 ## Translation
 
@@ -148,6 +157,18 @@ latter.
 You’ll find complete examples in the `examples` directory.
 
 ## Change log
+
+### Version 0.10.4
+
+* Changed the default error output for the validator from `stdout` to `stderr`.
+* Added an `errorOutput` option to the validator.
+* If the default error handler is used, and the plugin fallsback from RNG to RNC,
+  it discards the error handler and creates a new one so that any errors raised
+  in attempting to parse the RNC as RNG aren’t spuriously reported to the user.
+
+### Version 0.10.1, 0.10.2, 0.10.3
+
+No significant changes, just some publication issues.
 
 ### Version 0.10.0
 
