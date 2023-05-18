@@ -85,6 +85,10 @@ task invalid_redirect_errors(type: RelaxNGValidateTask) {
   compact false
   assertValid false
   debug debugTasks
+
+  doFirst {
+    mkdir buildDir
+  }
 }
 
 task invalid_no_fail_build(type: RelaxNGValidateTask) {
