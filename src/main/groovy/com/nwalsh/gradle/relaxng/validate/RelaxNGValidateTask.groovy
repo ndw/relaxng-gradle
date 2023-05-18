@@ -33,6 +33,7 @@ class RelaxNGValidateTask extends RelaxNGTask {
   private boolean feasiblyValid = false
   private boolean idrefChecking = true
   private OutputStream errorOutput = System.err
+  private File errorOutputFile = null
 
   void input(Object input) {
     inputPath = resolveResource(input)
@@ -54,13 +55,14 @@ class RelaxNGValidateTask extends RelaxNGTask {
     // The output must be a File, not a URI
     if (errout instanceof URI) {
       if (errout.getScheme() == FILE_SCHEME) {
-        errout = new File(errout.getPath())
+        errorOutputFile = new File(errout.getPath())
+        return
       } else {
         throw new GradleException("Error output must be a file or output stream.")
       }
     }
 
-    errorOutput = new FileOutputStream(errout);
+    errorOutputFile = errout
     show("Err: ${errout}")
   }
 
@@ -174,6 +176,10 @@ class RelaxNGValidateTask extends RelaxNGTask {
     if (errorHandler == null) {
       errorHandler = new ErrorHandlerImpl(errorOutput)
       userSuppliedErrorHandler = false
+    }
+
+    if (errorOutputFile != null) {
+      errorOutput = new FileOutputStream(errorOutputFile)
     }
 
     if (debug) {
