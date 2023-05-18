@@ -16,6 +16,8 @@ import org.xml.sax.ErrorHandler
 abstract class RelaxNGTask extends DefaultTask {
   protected static final String SEMICOLON = ';'
   protected static final String FILE_SCHEME = 'file'
+  protected static final String SLASH = '/'
+  protected static final String SPACE = ' '
 
   protected static final String CWD = System.getProperty("user.dir")
   protected URI theBaseURI = new File(CWD).toURI()
@@ -152,5 +154,13 @@ abstract class RelaxNGTask extends DefaultTask {
     }
 
     return null
+  }
+
+  private String fixWindowsPath(String path) {
+    return path.replace("\\", SLASH).replace("+", "%2B").replace(SPACE, "%20")
+  }
+
+  private String makeFileURI(String path) {
+    return "file:///" + path
   }
 }
